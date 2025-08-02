@@ -1,2 +1,4 @@
-.env
+# unified version you want to keep
 node_modules/
+.env
+dist/
