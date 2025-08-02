@@ -1,0 +1,19 @@
+@import "tailwindcss";
+@keyframes borderPulse {
+  0% {
+    border-color: #fff;
+    box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.4);
+  }
+  50% {
+    border-color: #60a5fa;
+    box-shadow: 0 0 15px 5px rgba(99, 102, 241, 0.6);
+  }
+  100% {
+    border-color: #fff;
+    box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.4);
+  }
+}
+
+.animate-borderPulse {
+  animation: borderPulse 1.2s infinite;
+}
