@@ -14,12 +14,15 @@ import Layout from './pages/Admin/Layout';
 import Dashboard from './pages/Admin/Dashboard';
 import Accounts from './pages/Admin/Accounts';
 import MyDetails from './pages/Admin/MyDetails';
-import PaymentTransfer from './pages/Admin/PaymentTransfer';
+import PaymentTransfer from './pages/admin/Payment/PaymentTransfer';
 import Transactions from './pages/Admin/Transactions';
 import HelpSupport from './pages/Admin/HelpSupport';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import { Toaster } from 'react-hot-toast';
+import ManageCards from './pages/admin/ManageCards';
+import LoanEmi from './pages/admin/LoanEmi';
+import PersonalPayment from './pages/admin/Payment/PersonalPayment';
 
 function App() {
   const location = useLocation();
@@ -47,6 +50,9 @@ function App() {
           <Route path="my-details" element={<MyDetails/>} />
           <Route path="help-support" element={<HelpSupport/>} />
           <Route path="payment-transfer" element={<PaymentTransfer/>} />
+          <Route path="payment-transfer/personal" element={<PersonalPayment/>} />
+          <Route path="loan-emi" element={<LoanEmi/>} />
+          <Route path="manage-cards" element={<ManageCards/>} />
           <Route path="transactions" element={<Transactions />} />
         </Route>
       </Routes>
