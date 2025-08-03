@@ -7,6 +7,7 @@ import {
   SettingsIcon,
   HelpCircleIcon,
   LogOutIcon,
+  LandmarkIcon,
 } from 'lucide-react';
 import React from 'react';
 import { NavLink } from 'react-router-dom';
@@ -24,8 +25,8 @@ const AdminSidebar = () => {
     { name: 'My Account', path: '/admin/accounts', icon: UserCircleIcon },
     { name: 'Transactions', path: '/admin/transactions', icon: ArrowDownToLineIcon },
     { name: 'Payment Transfer', path: '/admin/payment-transfer', icon: BanknoteIcon },
-    { name: 'Cards & UPI', path: '/admin/cards', icon: CreditCardIcon },
-    { name: 'Settings', path: '/admin/settings', icon: SettingsIcon },
+    { name: 'Manage Cards', path: '/admin/manage-cards', icon: CreditCardIcon },
+    { name: 'Loan, EMI & Insurance', path: '/admin/loan-emi', icon: LandmarkIcon },
     { name: 'Help & Support', path: '/admin/help-support', icon: HelpCircleIcon },
     { name: 'Logout', path: '/logout', icon: LogOutIcon },
   ];
