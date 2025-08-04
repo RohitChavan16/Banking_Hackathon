@@ -23,6 +23,9 @@ import { Toaster } from 'react-hot-toast';
 import ManageCards from './pages/admin/ManageCards';
 import LoanEmi from './pages/admin/LoanEmi';
 import PersonalPayment from './pages/admin/Payment/PersonalPayment';
+import SelectNewAccount from './pages/OpenAccount/SelectNewAccount';
+import CurrentAccount from './pages/OpenAccount/CurrentAccount';
+import SavingAccount from './pages/OpenAccount/SavingAccount';
 
 function App() {
   const location = useLocation();
@@ -44,6 +47,12 @@ function App() {
          <Route path = '/email-verify' element = {<EmailVerify/>} />
          <Route path = '/locate-us' element = {<LocateUs/>} />
          
+         <Route path="/new-account" >
+          <Route index element={<SelectNewAccount />}/>
+         <Route path = "saving-account" element = {<SavingAccount/>} />
+         <Route path = "current-account" element = {<CurrentAccount/>} />
+        </Route>
+
          <Route path="/admin" element={<Layout />}>
           <Route index element={<Dashboard />}/>
           <Route path="accounts" element={<Accounts/>} />
