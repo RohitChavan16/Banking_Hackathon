@@ -127,12 +127,12 @@ const features = [
 
 
 <div className=" h-30 p-5 flex items-center ml-[-25px] mt-10 justify-center">
-  <div className="grid grid-flow-col grid-rows-3 gap-2.5 bg-white rounded-xl shadow-xl p-3 overflow-auto max-w-full">
+  <div className="grid grid-flow-col max-md:grid-rows-3 max-md:gap-2  grid-rows-3 gap-2.5 bg-white rounded-xl shadow-xl p-3 overflow-auto max-w-full">
     {features.map((item, index) => (
       <div
         key={index}
         onClick={() => navigate(`/${item.id}`)}
-        className="relative cursor-pointer group w-45 h-17 rounded-xl shadow-lg hover:scale-105 transition-transform duration-300 flex flex-col items-center justify-center text-white font-semibold text-sm"
+        className="relative cursor-pointer group w-43 h-17 max-md:w-25 max-md:h-23 rounded-xl shadow-lg hover:scale-105 transition-transform duration-300 flex flex-col items-center justify-center text-white font-semibold text-sm"
       >
         <div className={`${item.color} w-full h-full rounded-xl flex flex-col items-center justify-center`}>
           <div className="text-3xl">{item.icon}</div>
@@ -143,7 +143,7 @@ const features = [
          <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-blue-600 via-indigo-700 to-purple-700 text-white text-sm font-semibold rounded-xl p-4 flex items-center justify-center shadow-[0_0_15px_rgba(99,102,241,0.8)] 
              opacity-0 scale-0 group-hover:opacity-100 group-hover:scale-100 
              transition-all duration-500 ease-in-out border-2 border-transparent group-hover:border-white animate-borderPulse z-10 pointer-events-none">
-            <p className="text-center">{item.description}</p>
+            <p className="text-center max-md:text-[10px]">{item.description}</p>
            </div>
 
 
