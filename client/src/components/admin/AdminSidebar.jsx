@@ -32,7 +32,7 @@ const AdminSidebar = () => {
   ];
 
   return (
-    <div className="h-[calc(100vh)] md:flex flex-col items-center bg-gradient-to-r from-[#040056] via-[#112fb1] to-[#0777c7f3] pt-8 max-w-13 md:max-w-60 w-full border-r border-gray-300 border-r-4 text-sm">
+    <div className="h-[calc(100vh)]  md:flex flex-col items-center bg-gradient-to-r from-[#040056] via-[#112fb1] to-[#0777c7f3] pt-8 max-w-13 md:max-w-60 w-full border-r border-gray-300 border-r-4 text-sm">
       <img
         className="h-9 md:h-14 w-9 md:w-14 rounded-full mx-auto"
         src={user.imageUrl}

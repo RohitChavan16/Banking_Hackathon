@@ -30,10 +30,10 @@ const BalanceOverTime = () => {
   ];
 
   return (
-    <div className=" mx-auto w-100 m-2 p-3 bg-orange-400/14 rounded-2xl  ">
+    <div className=" mx-auto w-100 ml-2 mt-2 mb-2 p-3 bg-orange-400/14 rounded-2xl  ">
       <h2 className="text-xl font-semibold text-gray-800 mb-6">📊 Balance Over Time</h2>
 
-      <ResponsiveContainer width="100%" height={320}>
+      <ResponsiveContainer width="100%" height={310}>
         <LineChart data={data} margin={{ top: 10, right: 30, left: 0, bottom: 5 }}>
           <defs>
             <linearGradient id="balanceLineGradient" x1="0" y1="0" x2="1" y2="0">
