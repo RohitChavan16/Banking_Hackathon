@@ -30,7 +30,7 @@ const BalanceOverTime = () => {
   ];
 
   return (
-    <div className=" mx-auto w-130 m-2 p-3 bg-white rounded-2xl  ">
+    <div className=" mx-auto w-100 m-2 p-3 bg-orange-400/14 rounded-2xl  ">
       <h2 className="text-xl font-semibold text-gray-800 mb-6">📊 Balance Over Time</h2>
 
       <ResponsiveContainer width="100%" height={320}>
