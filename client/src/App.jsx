@@ -25,13 +25,14 @@ import LoanEmi from './pages/admin/LoanEmi';
 import PersonalPayment from './pages/admin/Payment/PersonalPayment';
 import SelectNewAccount from './pages/OpenAccount/SelectNewAccount';
 import CurrentAccount from './pages/OpenAccount/CurrentAccount';
-import SavingAccount from './pages/OpenAccount/SavingAccount';
+import SavingAccount from './pages/OpenAccount/SavingAccount/SavingAccount';
+import BasicSaving from './pages/OpenAccount/SavingAccount/BasicSaving';
 
 function App() {
   const location = useLocation();
   const path = location.pathname;
   const navigate = useNavigate();
-  const isAdminRoute = path.startsWith('/admin') || path === '/login' || path === '/email-verify' || path === '/reset-password';
+  const isAdminRoute = path.startsWith('/admin') || path === '/login' || path === '/email-verify' || path === '/reset-password' || path === '/new-account/basic-savings';
  
 
   return (
@@ -51,6 +52,7 @@ function App() {
           <Route index element={<SelectNewAccount />}/>
          <Route path = "saving-account" element = {<SavingAccount/>} />
          <Route path = "current-account" element = {<CurrentAccount/>} />
+         <Route path = "basic-savings" element = {<BasicSaving/>} />
         </Route>
 
          <Route path="/admin" element={<Layout />}>

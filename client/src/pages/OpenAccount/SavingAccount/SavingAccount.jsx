@@ -69,7 +69,7 @@ const SavingAccount = () => {
         {savingTypes.map((type) => (
           <div
            key={type.id}
-           onClick={() => navigate(`/${type.id}`)} 
+           onClick={() => navigate(`/new-account/${type.id}`)} 
            className="bg-white group hover:shadow-lg p-6 rounded-lg shadow cursor-pointer">
             <h2 className="text-2xl  group-hover:text-blue-600 font-semibold mb-2">{type.name}</h2>
             <p className="text-gray-700 mb-1">

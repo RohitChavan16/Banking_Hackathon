@@ -107,6 +107,8 @@ const Navbar = () => {
   </svg>
 </button>
 
+ 
+  {/* This is Language Selector */}
 
   <div className={`absolute ${langOpen ? "block" : "hidden"} top-full mt-2 left-1/2 -translate-x-1/2 w-40 bg-white shadow-xl border rounded-xl z-50 overflow-hidden text-sm`}>
     <button onClick={() => {
@@ -140,7 +142,8 @@ const Navbar = () => {
   </div>
 </div>
 
-
+  
+  {/* Profile and Sign in */}
 
   {userData ? (
   <div
