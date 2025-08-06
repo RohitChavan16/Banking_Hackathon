@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import AccountProgressTracker from "../../../components/AccountProgressTracker";
 import { assets } from "../../../assets/assets";
 import toast from "react-hot-toast";
+import { useNavigate } from "react-router-dom";
 
 const BasicSaving = () => {
   const [selectedOption, setSelectedOption] = useState("");
@@ -9,6 +10,7 @@ const BasicSaving = () => {
   const [agreeVcip, setAgreeVcip] = useState(true);
   const [language, setLanguage] = useState("English");
   const [langOpen, setLangOpen] = useState(false);
+  const navigate = useNavigate();
 
   const options = [
     "I want to open new account via VKYC.",
@@ -22,7 +24,15 @@ const BasicSaving = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    // handle form submit
+    if(!selectedOption){
+        return toast.error("Please select one of the field");
+    }
+    if(!agreeTnC || !agreeVcip){
+        return toast.error("Please select the check box");
+    }
+
+    navigate('/new-account/basic-savings/registration');
+
   };
 
   return (
@@ -128,10 +138,10 @@ const BasicSaving = () => {
 
         {/* Buttons */}
         <div className="flex gap-4 mb-6">
-          <button className="bg-blue-600 text-white px-4 py-2 rounded text-sm hover:bg-blue-700">
+          <button className="bg-blue-600 cursor-pointer text-white px-4 py-2 rounded text-sm hover:bg-blue-700">
             User Guide
           </button>
-          <button className="bg-blue-600 text-white px-4 py-2 rounded text-sm hover:bg-blue-700">
+          <button className="bg-blue-600 cursor-pointer text-white px-4 py-2 rounded text-sm hover:bg-blue-700">
             Watch a Journey
           </button>
         </div>
@@ -139,11 +149,11 @@ const BasicSaving = () => {
         {/* Radio Options */}
         <form onSubmit={handleSubmit} className="space-y-3">
           {options.map((opt, idx) => (
-            <label key={idx} className="block">
+            <label key={idx} className="block w-150 cursor-pointer">
               <input
                 type="radio"
                 name="purpose"
-                className="mr-2"
+                className="mr-2, cursor-pointer"
                 value={opt}
                 checked={selectedOption === opt}
                 onChange={(e) => setSelectedOption(e.target.value)}
@@ -187,8 +197,8 @@ const BasicSaving = () => {
           <div className="mt-6">
             <button
               type="submit"
-             
-              className="bg-blue-700 hover:bg-blue-800 text-white px-6 py-2 rounded text-base font-medium"
+              onClick={handleSubmit}
+              className="bg-blue-700 hover:bg-blue-800 cursor-pointer text-white px-6 py-2 rounded text-base font-medium"
             >
               LET’S START
             </button>
