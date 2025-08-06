@@ -10,6 +10,7 @@ import React, { useContext, useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { AppContext } from "../context/AppContext";
 import { assets } from "../assets/assets";
+import toast from "react-hot-toast";
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -111,24 +112,28 @@ const Navbar = () => {
     <button onClick={() => {
     setLanguage("English");
     setLangOpen(false);
+    toast.success("Language changed to English!");
   }} className="flex items-center cursor-pointer gap-2 px-5 py-3 w-full text-left hover:bg-gray-100 transition-colors duration-200 text-gray-800">
       🇬🇧 <span>English</span>
     </button>
     <button onClick={() => {
     setLanguage("हिंदी");
     setLangOpen(false);
+    toast.success("भाषा हिंदी में बदल दी गई है!");
   }} className="flex items-center cursor-pointer gap-2 px-5 py-3 w-full text-left hover:bg-gray-100 transition-colors duration-200 text-gray-800">
       🇮🇳 <span>हिंदी</span>
     </button>
     <button onClick={() => {
     setLanguage("मराठी");
     setLangOpen(false);
+    toast.success("भाषा मराठीत बदलली गेली आहे!");
   }} className="flex items-center cursor-pointer gap-2 px-5 py-3 w-full text-left hover:bg-gray-100 transition-colors duration-200 text-gray-800">
       🇮🇳 <span>मराठी</span>
     </button>
     <button onClick={() => {
     setLanguage("ગુજરાતી");
     setLangOpen(false);
+    toast.success("ભાષા ગુજરાતીમાં બદલાઈ ગઈ છે!");
   }} className="flex items-center cursor-pointer gap-2 px-5 py-3 w-full text-left hover:bg-gray-100 transition-colors duration-200 text-gray-800">
       🇮🇳 <span>ગુજરાતી</span>
     </button>
