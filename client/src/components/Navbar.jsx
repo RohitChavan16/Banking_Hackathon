@@ -19,14 +19,9 @@ const Navbar = () => {
   const [langOpen, setLangOpen] = useState(false);
 
   const navigate = useNavigate();
-  const { setUserData, backendUrl, setIsLoggedin } = useContext(AppContext);
+  const { setUserData, userData, backendUrl, setIsLoggedin } = useContext(AppContext);
 
-  const userData = {
-    name: "Rohit Chavan",
-    email: "rohit@example.com",
-    isAccountVerified: false,
-    role: "customer",
-  };
+ 
 
   const handleLogout = () => {
     setUserData(null);
@@ -213,7 +208,7 @@ const Navbar = () => {
   <button
     type="button"
     onClick={() => navigate("/login")}
-    className="text-white border-2 border-blue-600 shadow-[0_0_20px_rgba(165,152,224,0.5)] bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-4 py-2 text-center"
+    className="text-white border-2 border-blue-700 shadow-[0_0_20px_rgba(165,152,224,0.5)] bg-gradient-to-r from-[#a40ffb] to-[#0b05b1] hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-4 cursor-pointer py-2 text-center"
   >
     🔐 Sign In
   </button>

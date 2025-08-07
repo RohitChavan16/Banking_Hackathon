@@ -34,18 +34,28 @@ import PersonalDetails from './pages/OpenAccount/SavingAccount/PersonalDetails';
 import NomineeDetails from './pages/OpenAccount/SavingAccount/NomineeDetails';
 import OtherBankingServices from './pages/OpenAccount/SavingAccount/OtherBankingServices';
 import SubmitNewAccountForm from './pages/OpenAccount/SavingAccount/SubmitNewAccountForm';
+import ChatBot from './components/ChatBot';
+import AskForVkyc from './pages/Kyc/AskForVkyc';
+import kyc from './pages/Kyc/kyc';
+import ScheduleVkyc from './pages/Kyc/ScheduleVkyc';
 
 function App() {
   const location = useLocation();
   const path = location.pathname;
   const navigate = useNavigate();
-  const isAdminRoute = path.startsWith('/admin') || path === '/login' || path === '/email-verify' || path === '/reset-password' || path === '/new-account/basic-savings' || path === '/new-account/basic-savings/registration';
+  const isAdminRoute = path.startsWith('/admin') || path === '/login' || path === '/email-verify' || path === '/reset-password' || path === '/new-account/basic-savings' || path === '/new-account/basic-savings/registration'
+  || path === '/new-account/basic-savings/documents' || path === '/new-account/basic-savings/address' || path === '/new-account/basic-savings/personal-details' || path === '/new-account/basic-savings/nominee' || path === '/new-account/basic-savings/services' || path === '/new-account/basic-savings/submit';
  
 
   return (
     <div className="">
       < Toaster />
       {!isAdminRoute && <Navbar />}
+
+      <div className="fixed bottom-6 right-6 z-50">
+        <ChatBot />
+      </div>
+
       <Routes>
          <Route path = '/' element = {<HomePage/>} />
          <Route path = '/about-us' element = {<AboutUs/>} /> 
@@ -70,6 +80,12 @@ function App() {
   <Route path="submit" element={<SubmitNewAccountForm />} />
 </Route>
 
+        </Route>
+
+        <Route path="/kyc">
+        <Route index element={kyc}/>
+        <Route path = "askforvkyc" element={<AskForVkyc/>} />
+        <Route path="schedule-vkyc" element={<ScheduleVkyc/>} />
         </Route>
 
          <Route path="/admin" element={<Layout />}>
