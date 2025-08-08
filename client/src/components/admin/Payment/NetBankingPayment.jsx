@@ -31,4 +31,5 @@ const NetBankingPayment = () => {
   );
 }
 
+
 export default NetBankingPayment;
