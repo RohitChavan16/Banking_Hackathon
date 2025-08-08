@@ -23,7 +23,8 @@
     "react-player": "^3.3.1",
     "react-router-dom": "^7.7.1",
     "recharts": "^3.1.0",
-    "tailwindcss": "^4.1.11"
+    "tailwindcss": "^4.1.11",
+    "tesseract.js": "^2.1.5"
   },
   "devDependencies": {
     "@eslint/js": "^9.30.1",

@@ -6,6 +6,45 @@ import TotalBalance from '../../components/admin/TotalBalance';
 import TransactionCategoryChart from '../../components/admin/TransactionCategoryChart';
 
 const Dashboard = () => {
+
+  const transactions = [
+  {
+    id: 1,
+    type: "Credit",
+    description: "Salary for August",
+    date: "2025-08-01",
+    amount: 50000,
+  },
+  {
+    id: 2,
+    type: "Debit",
+    description: "Electricity Bill",
+    date: "2025-08-03",
+    amount: 3000,
+  },
+  {
+    id: 3,
+    type: "Debit",
+    description: "Grocery Store",
+    date: "2025-08-05",
+    amount: 2500,
+  },
+  {
+    id: 4,
+    type: "Credit",
+    description: "Refund from Amazon",
+    date: "2025-08-06",
+    amount: 1500,
+  },
+  {
+    id: 5,
+    type: "Debit",
+    description: "Movie Tickets",
+    date: "2025-08-07",
+    amount: 800,
+  },
+];
+
   return (
     <div className="mb-10">
       <AdminTitle text="Dashboard" description=""/>
@@ -24,8 +63,48 @@ const Dashboard = () => {
 
 
    
+  <div className="flex gap-10 justify-between m-10">
 
-   <div className=" ml-190 max-md:mx-auto w-120 ">
+
+<div className="max-w-md w-110  bg-white rounded-lg shadow-md p-6 font-sans text-gray-800">
+      <div className="flex justify-between items-center mb-5">
+        <h2 className="text-xl font-semibold">Last 5 Transactions</h2>
+        <a
+          href="#"
+          className="text-blue-600 font-medium hover:text-blue-800 transition-colors"
+        >
+          View More
+        </a>
+      </div>
+      <ul>
+        {transactions.map(({ id, type, description, date, amount }) => (
+          <li
+            key={id}
+            className="flex justify-between items-center border-b border-gray-200 py-3 last:border-b-0"
+          >
+            <div className="max-w-[60%]">
+              <span className="block text-xs font-semibold text-gray-500 uppercase mb-1">
+                {type}
+              </span>
+              <p className="truncate">{description}</p>
+            </div>
+            <div className="flex flex-col items-end min-w-[120px]">
+              <span className="text-xs text-gray-400 mb-1">{date}</span>
+              <span
+                className={`font-semibold ${
+                  type === "Credit" ? "text-green-600" : "text-red-600"
+                }`}
+              >
+                {type === "Credit" ? "+" : "-"}₹{amount.toLocaleString()}
+              </span>
+            </div>
+          </li>
+        ))}
+      </ul>
+    </div>
+
+
+   <div className="  max-md:mx-auto w-120 ">
         <div className="bg-blue-950 rounded-xl shadow-md p-6 space-y-4">
   <h2 className="text-xl font-semibold text-gray-800 dark:text-white">🔗 Linked Services</h2>
 
@@ -88,10 +167,7 @@ const Dashboard = () => {
 
 
 
-
-
-
-
+</div>
 
 
 

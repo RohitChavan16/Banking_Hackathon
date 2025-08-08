@@ -15,7 +15,7 @@ export default function PaymentOptions() {
     { name: "Credit Card", icon: "💳", component: <CreditCardPayment /> },
     { name: "Debit Card", icon: "🏦", component: <DebitCardPayment /> },
     { name: "Net Banking", icon: "🌐", component: <NetBankingPayment /> },
-    { name: "Wallet", icon: "📱", component: <PersonalPayment /> },
+    { name: "NEFT / RTGS", icon: "📱", component: <PersonalPayment /> },
   ];
 
   return (
