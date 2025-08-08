@@ -38,6 +38,11 @@ import ChatBot from './components/ChatBot';
 import AskForVkyc from './pages/Kyc/AskForVkyc';
 import kyc from './pages/Kyc/kyc';
 import ScheduleVkyc from './pages/Kyc/ScheduleVkyc';
+import PaymentOptions from './pages/admin/Payment/PaymentOption';
+import UpiPayment from './components/admin/Payment/UpiPayment';
+import NetBankingPayment from './components/admin/Payment/NetBankingPayment';
+import CreditCardPayment from './components/admin/Payment/CreditCardPayment';
+import DebitCardPayment from './components/admin/Payment/DebitCardPayment';
 
 function App() {
   const location = useLocation();
@@ -95,6 +100,11 @@ function App() {
           <Route path="help-support" element={<HelpSupport/>} />
           <Route path="payment-transfer" element={<PaymentTransfer/>} />
           <Route path="payment-transfer/personal" element={<PersonalPayment/>} />
+          <Route path="payment-transfer/:id/payment-select" element={<PaymentOptions/>} />
+          <Route path="payment-transfer/:id/upi" element={<UpiPayment/>} />
+          <Route path="payment-transfer/:id/net-banking" element={<NetBankingPayment/>} />
+          <Route path="payment-transfer/:id/credit-payment" element={<CreditCardPayment/>} />
+          <Route path="payment-transfer/:id/debit-paymnet" element={<DebitCardPayment/>} />
           <Route path="loan-emi" element={<LoanEmi/>} />
           <Route path="manage-cards" element={<ManageCards/>} />
           <Route path="transactions" element={<Transactions />} />
