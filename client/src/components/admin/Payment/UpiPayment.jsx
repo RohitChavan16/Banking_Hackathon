@@ -1,11 +1,13 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 const UpiPayment = () => {
   const [upiId, setUpiId] = useState("");
+  const navigate = useNavigate();
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    alert(`Processing UPI payment for ${upiId}`);
+    navigate("/loading"); // Redirect to loading page
   };
 
   return (
@@ -29,6 +31,6 @@ const UpiPayment = () => {
       </button>
     </form>
   );
-}
+};
 
 export default UpiPayment;
