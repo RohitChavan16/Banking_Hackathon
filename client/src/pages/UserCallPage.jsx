@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import io from "socket.io-client";
+import {toast} from "react-hot-toast"
 
 const socket = io("http://localhost:5000");
 
@@ -91,7 +92,7 @@ const UserCallPage = () => {
   }, []);
 
   async function startCall() {
-    if (!peerConnectionRef.current) return;
+    if (!peerConnectionRef.current) return toast.error("Something is Wrong");
 
     try {
       const offer = await peerConnectionRef.current.createOffer();

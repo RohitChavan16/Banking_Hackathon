@@ -17,7 +17,7 @@ const HomeMain = () => {
     { id: 'fixed-deposits',    name: t('home.features1.fixedDeposits.name'),    icon: '🏦', color: 'bg-indigo-500', description: t('home.features1.fixedDeposits.desc') },
     { id: 'mutual-funds',      name: t('home.features1.mutualFunds.name'),      icon: '📈', color: 'bg-teal-500',   description: t('home.features1.mutualFunds.desc') },
     { id: 'insurance',         name: t('home.features1.insurance.name'),         icon: '🛡️', color: 'bg-pink-500',   description: t('home.features1.insurance.desc') },
-    { id: 'customer-support',  name: t('home.features1.customerSupport.name'),  icon: '📞', color: 'bg-red-500',    description: t('home.features1.customerSupport.desc') },
+    { id: 'admin-call',  name: t('home.features1.customerSupport.name'),  icon: '📞', color: 'bg-red-500',    description: t('home.features1.customerSupport.desc') },
     { id: 'account-services',  name: t('home.features1.accountServices.name'),  icon: '🧾', color: 'bg-gray-600',   description: t('home.features1.accountServices.desc') },
     { id: 'upi-payments',      name: t('home.features1.upiPayments.name'),      icon: '🔁', color: 'bg-cyan-600',   description: t('home.features1.upiPayments.desc') },
     { id: 'branch-locator',    name: t('home.features1.branchLocator.name'),    icon: '📍', color: 'bg-lime-600',   description: t('home.features1.branchLocator.desc') },
