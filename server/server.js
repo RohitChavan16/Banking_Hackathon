@@ -12,14 +12,15 @@ const io = new Server(server, {
   },
 });
 
+// Define Express routes here (outside connection handler)
+app.get("/", (req, res) => {
+  res.send("Backend server is running!");
+});
+
 let adminSocketId = null;
 
 io.on("connection", (socket) => {
   console.log("User connected:", socket.id);
-
-  app.get("/", (req, res) => {
-  res.send("Backend server is running!");
-});
 
   // Admin registers itself
   socket.on("admin-register", () => {
@@ -55,6 +56,8 @@ io.on("connection", (socket) => {
   });
 });
 
-server.listen(5000, () => {
-  console.log("Server running on port 5000");
+const PORT = process.env.PORT || 5000;
+
+server.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
 });
