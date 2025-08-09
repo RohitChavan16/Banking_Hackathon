@@ -11,7 +11,7 @@ const HomeMain = () => {
   const features = [
     { id: 'new-account',       name: t('home.features1.newAccount.name'),       icon: '🆕', color: 'bg-orange-500', description: t('home.features1.newAccount.desc') },
     { id: 'internet-banking',  name: t('home.features1.internetBanking.name'),  icon: '💻', color: 'bg-blue-500',   description: t('home.features1.internetBanking.desc') },
-    { id: 'home-loans',        name: t('home.features1.homeLoans.name'),        icon: '🏠', color: 'bg-emerald-600',description: t('home.features1.homeLoans.desc') },
+    { id: 'user-call',        name: t('home.features1.homeLoans.name'),        icon: '🏠', color: 'bg-emerald-600',description: t('home.features1.homeLoans.desc') },
     { id: 'personal-loans',    name: t('home.features1.personalLoans.name'),    icon: '💰', color: 'bg-yellow-500', description: t('home.features1.personalLoans.desc') },
     { id: 'credit-cards',      name: t('home.features1.creditCards.name'),      icon: '💳', color: 'bg-purple-500', description: t('home.features1.creditCards.desc') },
     { id: 'fixed-deposits',    name: t('home.features1.fixedDeposits.name'),    icon: '🏦', color: 'bg-indigo-500', description: t('home.features1.fixedDeposits.desc') },
