@@ -2,15 +2,16 @@ import React, { useState } from 'react';
 import AdminTitle from '../../../components/admin/AdminTitle';
 import { createWorker } from 'tesseract.js';
 import { useNavigate } from 'react-router-dom';
-
-
+import { useTranslation } from 'react-i18next';
 
 const PersonalPayment = () => {
-   const [isLoading, setIsLoading] = useState(false);
+  const { t } = useTranslation();
+
+  const [isLoading, setIsLoading] = useState(false);
   const [ocrLoading, setOcrLoading] = useState(false);
   const [ocrText, setOcrText] = useState('');
-  const [imageURL, setImageURL] = useState(null); // For preview
-  const [imageFile, setImageFile] = useState(null); // Store actual File for OCR
+  const [imageURL, setImageURL] = useState(null); 
+  const [imageFile, setImageFile] = useState(null);
   const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
@@ -31,12 +32,11 @@ const PersonalPayment = () => {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  // Handle image upload — store both URL for preview and File for OCR
   const handleImageChange = (e) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
-      setImageURL(URL.createObjectURL(file)); // for preview
-      setImageFile(file); // for OCR
+      setImageURL(URL.createObjectURL(file));
+      setImageFile(file);
       setOcrText('');
       setFormData((prev) => ({
         ...prev,
@@ -49,36 +49,34 @@ const PersonalPayment = () => {
   };
 
   const runOCR = async () => {
-  if (!imageFile) {
-    alert('Please upload an image of the passbook first.');
-    return;
-  }
+    if (!imageFile) {
+      alert(t('personalPayment.alertUploadPassbook'));
+      return;
+    }
 
-  setOcrLoading(true);
+    setOcrLoading(true);
 
-  const worker = createWorker({
-    logger: (m) => {
-      // optionally track progress here
-      // console.log(m);
-    },
-  });
+    const worker = createWorker({
+      logger: (m) => {
+        // optional progress logging
+      },
+    });
 
-  try {
-    await worker.load();
-    await worker.loadLanguage('eng');
-    await worker.initialize('eng');
-    const { data: { text } } = await worker.recognize(imageFile);
-    setOcrText(text);
-    parseOCRText(text);
-    await worker.terminate();
-  } catch (error) {
-    alert('Error while performing OCR. Please try again.');
-    console.error(error);
-  } finally {
-    setOcrLoading(false);
-  }
-};
-
+    try {
+      await worker.load();
+      await worker.loadLanguage('eng');
+      await worker.initialize('eng');
+      const { data: { text } } = await worker.recognize(imageFile);
+      setOcrText(text);
+      parseOCRText(text);
+      await worker.terminate();
+    } catch (error) {
+      alert(t('personalPayment.alertOcrError'));
+      console.error(error);
+    } finally {
+      setOcrLoading(false);
+    }
+  };
 
   const parseOCRText = (rawText) => {
     const accountNoMatch = rawText.match(/\b\d{9,18}\b/);
@@ -103,22 +101,19 @@ const PersonalPayment = () => {
 
     console.log('Form submitted:', formData);
 
-    setIsLoading(false); // trigger parent logic
+    setIsLoading(false);
     navigate("/loading");
   };
 
   return (
-     <div>
+    <div>
       <AdminTitle
-        text="Secure Bank Transfer"
-        description="  Easily transfer funds securely and quickly using NEFT or RTGS.
-Provide the beneficiary’s bank account details including account number, IFSC code, and bank name to send money directly to their bank account.
-NEFT processes transactions in batches throughout the day, while RTGS offers instant settlement for high-value transfers.
-"
+        text={t('personalPayment.title')}
+        description={t('personalPayment.description')}
       />
 
       <div className="max-w-3xl mx-3 p-6 bg-white rounded-xl mb-6">
-        <h3 className="text-lg font-semibold text-gray-700 mb-4">Upload Recipient Passbook Image</h3>
+        <h3 className="text-lg font-semibold text-gray-700 mb-4">{t('personalPayment.uploadTitle')}</h3>
         <input
           type="file"
           accept="image/*"
@@ -127,7 +122,7 @@ NEFT processes transactions in batches throughout the day, while RTGS offers ins
         />
         {imageURL && (
           <div className="mb-4">
-            <img src={imageURL} alt="Passbook preview" className="w-full rounded shadow" />
+            <img src={imageURL} alt={t('personalPayment.passbookPreviewAlt')} className="w-full rounded shadow" />
           </div>
         )}
         <button
@@ -149,17 +144,16 @@ NEFT processes transactions in batches throughout the day, while RTGS offers ins
         )}
       </div>
 
-      {/* Your existing form (no content changed) */}
       <form
         onSubmit={handleSubmit}
         className="max-w-3xl mx-3 p-6 bg-white rounded-xl space-y-4"
       >
         <div className="space-y-4 border border-gray-300 p-5 rounded-md bg-gray-50">
-          <h3 className="text-lg font-semibold text-gray-700 mb-2">Recipient Details</h3>
+          <h3 className="text-lg font-semibold text-gray-700 mb-2">{t('personalPayment.recipientDetails')}</h3>
 
           <div className="flex max-md:flex-col gap-2 items-center">
             <label className="block text-[16px] w-50 max-md:ml-[-120px] font-medium text-gray-500">
-              Full Name :-
+              {t('personalPayment.fullName')} :-
             </label>
             <input
               name="friendName"
@@ -167,13 +161,13 @@ NEFT processes transactions in batches throughout the day, while RTGS offers ins
               onChange={handleChange}
               required
               className="input w-full p-2 outline-none text-[15px] border border-gray-700/40 rounded "
-              placeholder="e.g. Rahul Sharma"
+              placeholder={t('personalPayment.fullNamePlaceholder')}
             />
           </div>
 
           <div className="flex max-md:flex-col gap-2 items-center">
             <label className="block text-[16px] w-50 max-md:ml-[-120px] font-medium text-gray-500">
-              Account No :-
+              {t('personalPayment.accountNo')} :-
             </label>
             <input
               name="accountOrUpi"
@@ -181,46 +175,46 @@ NEFT processes transactions in batches throughout the day, while RTGS offers ins
               onChange={handleChange}
               required
               className="input w-full p-2 outline-none text-[15px] border border-gray-700/40 rounded "
-              placeholder="rahul@upi or 1234567890"
+              placeholder={t('personalPayment.accountOrUpiPlaceholder')}
             />
           </div>
 
           <div className="flex max-md:flex-col gap-2 items-center">
             <label className="block text-[16px] w-50 max-md:ml-[-120px] font-medium text-gray-500">
-              Bank Name :-
+              {t('personalPayment.bankName')} :-
             </label>
             <input
               name="bankName"
               value={formData.bankName}
               onChange={handleChange}
               className="input w-full p-2 outline-none text-[15px] border border-gray-700/40 rounded "
-              placeholder="e.g. HDFC Bank"
+              placeholder={t('personalPayment.bankNamePlaceholder')}
             />
           </div>
 
           <div className="flex max-md:flex-col gap-2 items-center">
             <label className="block text-[16px] w-50 max-md:ml-[-120px] font-medium text-gray-500">
-              IFSC Code :-
+              {t('personalPayment.ifscCode')} :-
             </label>
             <input
               name="ifsc"
               value={formData.ifsc}
               onChange={handleChange}
               className="input w-full p-2 outline-none text-[15px] border border-gray-700/40 rounded "
-              placeholder="HDFC0001234"
+              placeholder={t('personalPayment.ifscPlaceholder')}
             />
           </div>
 
           <div className="flex max-md:flex-col gap-2 items-center">
             <label className="block text-[16px] w-50 max-md:ml-[-120px] font-medium text-gray-500">
-              Email / Mobile :-
+              {t('personalPayment.contact')} :-
             </label>
             <input
               name="contact"
               value={formData.contact}
               onChange={handleChange}
               className="input w-full p-2 outline-none text-[15px] border border-gray-700/40 rounded "
-              placeholder="+91XXXXXXXXXX or email"
+              placeholder={t('personalPayment.contactPlaceholder')}
             />
           </div>
         </div>
@@ -228,11 +222,11 @@ NEFT processes transactions in batches throughout the day, while RTGS offers ins
         <hr className="text-gray-400  w-312 mx-[-20px]" />
 
         <div className="space-y-4 border border-gray-300 p-5 rounded-md bg-gray-50">
-          <h3 className="text-lg font-semibold text-gray-700 mb-2">Transaction Details</h3>
+          <h3 className="text-lg font-semibold text-gray-700 mb-2">{t('personalPayment.transactionDetails')}</h3>
 
           <div className="flex max-md:flex-col gap-2 items-center">
             <label className="block text-[16px] w-50 max-md:ml-[-120px] font-medium text-gray-500">
-              Amount :-
+              {t('personalPayment.amount')} :-
             </label>
             <input
               type="number"
@@ -242,13 +236,13 @@ NEFT processes transactions in batches throughout the day, while RTGS offers ins
               required
               min={1}
               className="input w-full p-2 px-3 outline-none text-[15px] border border-gray-700/40 rounded "
-              placeholder="₹1000"
+              placeholder={t('personalPayment.amountPlaceholder')}
             />
           </div>
 
           <div className="flex max-md:flex-col gap-2 items-center">
             <label className="block text-[16px] w-50 max-md:ml-[-120px] font-medium text-gray-500">
-              Transfer Type :-
+              {t('personalPayment.transferType')} :-
             </label>
             <select
               name="transferType"
@@ -256,15 +250,15 @@ NEFT processes transactions in batches throughout the day, while RTGS offers ins
               onChange={handleChange}
               className="input w-full p-2 outline-none text-[15px] border border-gray-700/40 rounded "
             >
-              <option value="NEFT">NEFT</option>
-              <option value="IMPS">IMPS</option>
-              <option value="RTGS">RTGS</option>
+              <option value="NEFT">{t('personalPayment.transferTypes.neft')}</option>
+              <option value="IMPS">{t('personalPayment.transferTypes.imps')}</option>
+              <option value="RTGS">{t('personalPayment.transferTypes.rtgs')}</option>
             </select>
           </div>
 
           <div className="flex max-md:flex-col gap-2 items-center">
             <label className="block text-[16px] w-50 max-md:ml-[-120px] font-medium text-gray-500">
-              Message :-
+              {t('personalPayment.message')} :-
             </label>
             <input
               name="message"
@@ -272,13 +266,13 @@ NEFT processes transactions in batches throughout the day, while RTGS offers ins
               onChange={handleChange}
               maxLength={50}
               className="input w-full p-2 outline-none text-[15px] border border-gray-700/40 rounded "
-              placeholder="e.g. Rent for August"
+              placeholder={t('personalPayment.messagePlaceholder')}
             />
           </div>
 
           <div className="flex max-md:flex-col gap-2 items-center">
             <label className="block text-[16px] w-50 max-md:ml-[-120px] font-medium text-gray-500">
-              Transfer Mode :-
+              {t('personalPayment.transferMode')} :-
             </label>
             <select
               name="transferMode"
@@ -286,14 +280,14 @@ NEFT processes transactions in batches throughout the day, while RTGS offers ins
               onChange={handleChange}
               className="input w-full p-2 outline-none text-[15px] border border-gray-700/40 rounded "
             >
-              <option value="instant">Instant</option>
-              <option value="scheduled">Scheduled</option>
+              <option value="instant">{t('personalPayment.transferModes.instant')}</option>
+              <option value="scheduled">{t('personalPayment.transferModes.scheduled')}</option>
             </select>
           </div>
 
           <div className="flex max-md:flex-col gap-2 items-center">
             <label className="block text-[16px] w-50 max-md:ml-[-120px] font-medium text-gray-500">
-              Enter OTP :-
+              {t('personalPayment.enterOtp')} :-
             </label>
             <input
               name="otp"
@@ -301,10 +295,10 @@ NEFT processes transactions in batches throughout the day, while RTGS offers ins
               onChange={handleChange}
               required
               className="input w-full p-2 outline-none text-[15px] border border-gray-700/40 rounded "
-              placeholder="Enter 6-digit OTP"
+              placeholder={t('personalPayment.otpPlaceholder')}
             />
             <button className="w-40 p-[7.3px] border rounded border-amber-600 cursor-pointer bg-amber-500 ">
-              <span className="ml-auto">Request Otp</span>
+              <span className="ml-auto">{t('personalPayment.requestOtp')}</span>
             </button>
           </div>
         </div>
@@ -336,10 +330,10 @@ NEFT processes transactions in batches throughout the day, while RTGS offers ins
                   d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
                 />
               </svg>
-              Sending...
+              {t('personalPayment.sending')}
             </span>
           ) : (
-            'Send Money'
+            t('personalPayment.sendMoney')
           )}
         </button>
       </form>
