@@ -12,12 +12,12 @@ import LocateUs from './pages/LocateUs';
 import EmailVerify from './pages/EmailVerify';
 import HomePage from './pages/HomePage';
 
-import Dashboard from './pages/Admin/Dashboard';
-import Accounts from './pages/Admin/Accounts';
-import MyDetails from './pages/Admin/MyDetails';
+import Dashboard from './pages/admin/Dashboard';
+import Accounts from './pages/admin/Accounts';
+import MyDetails from './pages/admin/MyDetails';
 import PaymentTransfer from './pages/admin/Payment/PaymentTransfer';
-import Transactions from './pages/Admin/Transactions';
-import HelpSupport from './pages/Admin/HelpSupport';
+import Transactions from './pages/admin/Transactions';
+import HelpSupport from './pages/admin/HelpSupport';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import { Toaster } from 'react-hot-toast';
