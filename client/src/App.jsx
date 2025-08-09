@@ -46,6 +46,8 @@ import CreditCardPayment from './components/admin/Payment/CreditCardPayment';
 import DebitCardPayment from './components/admin/Payment/DebitCardPayment';
 import PaymentSuccess from './components/admin/Payment/PaymentSuccess';
 import LoadingPage from './components/LoadingPage';
+import AdminVideoPage from './pages/AdminVideoPage';
+import UserCallPage from './pages/UserCallPage';
 
 function App() {
   const location = useLocation();
@@ -73,6 +75,8 @@ function App() {
          <Route path = '/email-verify' element = {<EmailVerify/>} />
          <Route path = '/locate-us' element = {<LocateUs/>} />
          <Route path = '/loading' element = {<LoadingPage/>} />
+         <Route path = '/admin-call' element = {<AdminVideoPage/>} />
+         <Route path = "/user-call" element = {<UserCallPage/>} />
          
          <Route path="/new-account" >
           <Route index element={<SelectNewAccount />}/>
