@@ -11,7 +11,7 @@ import UserLogin from './pages/UserLogin';
 import LocateUs from './pages/LocateUs';
 import EmailVerify from './pages/EmailVerify';
 import HomePage from './pages/HomePage';
-import Layout from './pages/Admin/Layout';
+
 import Dashboard from './pages/Admin/Dashboard';
 import Accounts from './pages/Admin/Accounts';
 import MyDetails from './pages/Admin/MyDetails';
@@ -48,6 +48,7 @@ import PaymentSuccess from './components/admin/Payment/PaymentSuccess';
 import LoadingPage from './components/LoadingPage';
 import AdminVideoPage from './pages/AdminVideoPage';
 import UserCallPage from './pages/UserCallPage';
+import Layout from './pages/admin/Layout';
 
 function App() {
   const location = useLocation();
