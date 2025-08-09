@@ -17,6 +17,10 @@ let adminSocketId = null;
 io.on("connection", (socket) => {
   console.log("User connected:", socket.id);
 
+  app.get("/", (req, res) => {
+  res.send("Backend server is running!");
+});
+
   // Admin registers itself
   socket.on("admin-register", () => {
     adminSocketId = socket.id;
