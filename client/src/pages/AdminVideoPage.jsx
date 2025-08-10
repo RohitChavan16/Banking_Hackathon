@@ -1,13 +1,11 @@
 import React, { useEffect, useRef, useState } from "react";
-import socket from "../socket"; // Your socket instance
-import styles from "./VideoCall.module.css";
+import io from "socket.io-client";
+
+const socket = io("https://banking-hackathon.onrender.com"); 
 
 const AdminVideoPage = () => {
-  const [incomingCall, setIncomingCall] = useState(null); // { from, offer }
+  const [incomingCall, setIncomingCall] = useState(null);
   const [callStarted, setCallStarted] = useState(false);
-  const [currentCaller, setCurrentCaller] = useState(null);
-  const [isAccepting, setIsAccepting] = useState(false);
-  const [errorMsg, setErrorMsg] = useState("");
 
   const localVideoRef = useRef(null);
   const remoteVideoRef = useRef(null);
@@ -17,65 +15,39 @@ const AdminVideoPage = () => {
     iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
   };
 
-  // Register admin on connect and reconnect
   useEffect(() => {
-    function registerAdmin() {
-      socket.emit("admin-register");
-    }
+    socket.emit("admin-register");
+    console.log("Admin registered:", socket.id);
 
-    registerAdmin();
-
-    socket.on("connect", registerAdmin);
-
-    return () => {
-      socket.off("connect", registerAdmin);
-    };
-  }, []);
-
-  // Listen for incoming call, ice candidates, and call ended
-  useEffect(() => {
-    socket.on("incoming-call", ({ from, offer }) => {
+    socket.on("incoming-call", async ({ from, offer }) => {
+      console.log("Incoming call from:", from);
       setIncomingCall({ from, offer });
-      setErrorMsg("");
     });
 
-    socket.on("ice-candidate", (data) => {
-      if (peerConnectionRef.current) {
-        peerConnectionRef.current
-          .addIceCandidate(new RTCIceCandidate(data.candidate))
-          .catch(console.error);
+    socket.on("ice-candidate", async ({ candidate }) => {
+      try {
+        await peerConnectionRef.current?.addIceCandidate(candidate);
+      } catch (e) {
+        console.error(e);
       }
     });
 
     socket.on("call-ended", () => {
-      endCallCleanup();
-      alert("User ended the call.");
-    });
-
-    socket.on("call-rejected", () => {
-      setErrorMsg("User rejected the call.");
-      setIncomingCall(null);
+      endCall();
     });
 
     return () => {
       socket.off("incoming-call");
       socket.off("ice-candidate");
       socket.off("call-ended");
-      socket.off("call-rejected");
     };
   }, []);
 
-  // Accept incoming call
-  async function acceptCall() {
+  const acceptCall = async () => {
     if (!incomingCall) return;
-    setIsAccepting(true);
-    setErrorMsg("");
 
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: true,
-        audio: true,
-      });
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
       localVideoRef.current.srcObject = stream;
 
       const pc = new RTCPeerConnection(iceServers);
@@ -99,122 +71,59 @@ const AdminVideoPage = () => {
 
       socket.emit("answer-call", { to: incomingCall.from, answer });
 
-      setCurrentCaller(incomingCall.from);
       setCallStarted(true);
       setIncomingCall(null);
     } catch (err) {
-      setErrorMsg("Failed to accept call.");
       console.error(err);
-    } finally {
-      setIsAccepting(false);
+      alert("Failed to accept call");
     }
-  }
+  };
 
-  // Reject call
-  function rejectCall() {
-    if (incomingCall) {
-      socket.emit("call-rejected", { to: incomingCall.from });
-      setIncomingCall(null);
-    }
-  }
-
-  // Cleanup peer connection and media streams
-  function endCallCleanup() {
-    if (peerConnectionRef.current) {
-      peerConnectionRef.current.close();
-      peerConnectionRef.current = null;
-    }
+  const endCall = () => {
+    peerConnectionRef.current?.close();
+    peerConnectionRef.current = null;
 
     if (localVideoRef.current?.srcObject) {
       localVideoRef.current.srcObject.getTracks().forEach((t) => t.stop());
       localVideoRef.current.srcObject = null;
     }
-
     if (remoteVideoRef.current?.srcObject) {
       remoteVideoRef.current.srcObject.getTracks().forEach((t) => t.stop());
       remoteVideoRef.current.srcObject = null;
     }
 
     setCallStarted(false);
-    setCurrentCaller(null);
-  }
-
-  // Hang up call manually
-  function hangUpCall() {
-    if (currentCaller) {
-      socket.emit("call-ended", { to: currentCaller });
-    }
-    endCallCleanup();
-  }
+    setIncomingCall(null);
+  };
 
   return (
-    <div className={styles.container}>
-      <h1 className="text-4xl font-extrabold text-blue-900 mb-10">Admin Video Panel</h1>
+    <div style={{ padding: 20 }}>
+      <h1>Admin Video Call</h1>
 
-      <div className={styles.videos}>
-        {/* Local Video */}
-        <div className={styles.videoWrapper}>
-          <video
-            ref={localVideoRef}
-            autoPlay
-            muted
-            playsInline
-            className={`${styles.video} ${styles.mutedVideo}`}
-          />
-          <p className="mt-4 text-blue-800 font-semibold text-lg">Your Camera</p>
+      <div style={{ display: "flex", gap: 20 }}>
+        <div>
+          <h3>Your Video</h3>
+          <video ref={localVideoRef} autoPlay muted playsInline style={{ width: 300, border: "1px solid black" }} />
         </div>
 
-        {/* Remote Video */}
-        <div className={styles.videoWrapper}>
-          <video
-            ref={remoteVideoRef}
-            autoPlay
-            playsInline
-            className={`${styles.video} ${callStarted ? "border-green-600" : "border-gray-400"}`}
-          />
-          <p
-            className={`mt-4 font-semibold text-lg ${
-              callStarted ? "text-green-700" : "text-gray-500"
-            }`}
-          >
-            {callStarted ? "User Camera" : "Waiting for call..."}
-          </p>
+        <div>
+          <h3>User Video</h3>
+          <video ref={remoteVideoRef} autoPlay playsInline style={{ width: 300, border: "1px solid black" }} />
         </div>
       </div>
 
-      {errorMsg && <div className={styles.error}>{errorMsg}</div>}
-
-      {/* Incoming Call Modal */}
       {incomingCall && (
-        <div className={styles.modal}>
-          <h2 className={styles.modalHeading}>Incoming Call</h2>
-          <p className={styles.modalText}>
-            User <span className="font-mono">{incomingCall.from}</span> is calling you.
-          </p>
-          <div className={styles.btnGroup}>
-            <button
-              onClick={acceptCall}
-              disabled={isAccepting}
-              className={styles.acceptBtn}
-            >
-              {isAccepting ? "Accepting..." : "Accept"}
-            </button>
-            <button
-              onClick={rejectCall}
-              disabled={isAccepting}
-              className={styles.rejectBtn}
-            >
-              Reject
-            </button>
-          </div>
+        <div style={{ marginTop: 20 }}>
+          <p>Incoming call from {incomingCall.from}</p>
+          <button onClick={acceptCall}>Accept Call</button>
+          <button onClick={() => setIncomingCall(null)}>Reject Call</button>
         </div>
       )}
 
-      {/* Hang Up Button */}
       {callStarted && (
-        <button onClick={hangUpCall} className={styles.hangupBtn}>
-          Hang Up Call
-        </button>
+        <div style={{ marginTop: 20 }}>
+          <button onClick={endCall}>End Call</button>
+        </div>
       )}
     </div>
   );

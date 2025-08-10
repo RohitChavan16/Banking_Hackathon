@@ -1,3 +1,4 @@
+// server.js
 import express from "express";
 import http from "http";
 import { Server } from "socket.io";
@@ -7,6 +8,7 @@ const app = express();
 app.use(cors({ origin: "*" }));
 
 const server = http.createServer(app);
+
 const io = new Server(server, {
   cors: { origin: "*" },
 });
@@ -14,7 +16,7 @@ const io = new Server(server, {
 let adminSocketId = null;
 
 io.on("connection", (socket) => {
-  console.log("New connection:", socket.id);
+  console.log("Connected:", socket.id);
 
   socket.on("admin-register", () => {
     adminSocketId = socket.id;
@@ -32,20 +34,19 @@ io.on("connection", (socket) => {
 
   socket.on("answer-call", ({ to, answer }) => {
     console.log(`Admin ${socket.id} answers User ${to}`);
-    io.to(to).emit("call-answered", { answer, from: socket.id });
+    io.to(to).emit("call-answered", { answer });
   });
 
   socket.on("ice-candidate", ({ to, candidate }) => {
-    console.log(`ICE candidate from ${socket.id} to ${to}`);
-    io.to(to).emit("ice-candidate", { candidate, from: socket.id });
+    io.to(to).emit("ice-candidate", { candidate });
   });
 
   socket.on("disconnect", () => {
-    console.log("Disconnected:", socket.id);
     if (socket.id === adminSocketId) {
       adminSocketId = null;
       console.log("Admin disconnected");
     }
+    console.log("Disconnected:", socket.id);
   });
 });
 
