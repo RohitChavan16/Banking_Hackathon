@@ -1,9 +1,10 @@
 import React, { useEffect, useRef, useState } from "react";
-import socket from "../socket";
+import socket from "../socket"; // your socket instance
+import styles from "./VideoCall.module.css";
 
 const UserCallPage = () => {
-  const localVideoRef = useRef();
-  const remoteVideoRef = useRef();
+  const localVideoRef = useRef(null);
+  const remoteVideoRef = useRef(null);
   const peerConnectionRef = useRef(null);
   const remoteSocketIdRef = useRef(null);
 
@@ -11,18 +12,25 @@ const UserCallPage = () => {
   const [callEnded, setCallEnded] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
 
-  const iceServers = { iceServers: [{ urls: "stun:stun.l.google.com:19302" }] };
+  const iceServers = {
+    iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
+  };
 
   useEffect(() => {
     async function setupLocalStream() {
       try {
-        const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: true,
+          audio: true,
+        });
         localVideoRef.current.srcObject = stream;
 
         const pc = new RTCPeerConnection(iceServers);
         peerConnectionRef.current = pc;
 
-        stream.getTracks().forEach((track) => pc.addTrack(track, stream));
+        stream.getTracks().forEach((track) => {
+          pc.addTrack(track, stream);
+        });
 
         pc.ontrack = (event) => {
           remoteVideoRef.current.srcObject = event.streams[0];
@@ -30,11 +38,14 @@ const UserCallPage = () => {
 
         pc.onicecandidate = (event) => {
           if (event.candidate && remoteSocketIdRef.current) {
-            socket.emit("ice-candidate", { to: remoteSocketIdRef.current, candidate: event.candidate });
+            socket.emit("ice-candidate", {
+              to: remoteSocketIdRef.current,
+              candidate: event.candidate,
+            });
           }
         };
-      } catch {
-        setErrorMsg("Allow access to camera and microphone.");
+      } catch (err) {
+        setErrorMsg("Error accessing camera or microphone. Please allow permissions.");
       }
     }
 
@@ -45,26 +56,32 @@ const UserCallPage = () => {
         peerConnectionRef.current.close();
         peerConnectionRef.current = null;
       }
+      // Keep socket connected for reuse
     };
   }, []);
 
   useEffect(() => {
-    socket.on("call-answered", async ({ answer, from }) => {
-      remoteSocketIdRef.current = from;
-      await peerConnectionRef.current.setRemoteDescription(new RTCSessionDescription(answer));
-      setCallStarted(true);
-      setCallEnded(false);
-      setErrorMsg("");
+    socket.on("call-answered", async (data) => {
+      try {
+        await peerConnectionRef.current.setRemoteDescription(
+          new RTCSessionDescription(data.answer)
+        );
+        setCallStarted(true);
+        setCallEnded(false);
+        setErrorMsg("");
+      } catch {
+        setErrorMsg("Failed to establish connection.");
+      }
     });
 
-    socket.on("ice-candidate", ({ candidate }) => {
+    socket.on("ice-candidate", (data) => {
       if (peerConnectionRef.current) {
-        peerConnectionRef.current.addIceCandidate(new RTCIceCandidate(candidate)).catch(console.error);
+        peerConnectionRef.current.addIceCandidate(new RTCIceCandidate(data.candidate)).catch(console.error);
       }
     });
 
     socket.on("no-admin", () => {
-      setErrorMsg("No admin available right now. Try again later.");
+      setErrorMsg("No admin available right now. Please try later.");
     });
 
     socket.on("call-rejected", () => {
@@ -75,7 +92,7 @@ const UserCallPage = () => {
 
     socket.on("call-ended", () => {
       setErrorMsg("Call ended by admin.");
-      endCall();
+      endCallCleanup();
     });
 
     return () => {
@@ -89,7 +106,7 @@ const UserCallPage = () => {
 
   async function startCall() {
     if (!peerConnectionRef.current) {
-      setErrorMsg("Error starting call, refresh and try again.");
+      setErrorMsg("Something went wrong, please refresh.");
       return;
     }
     try {
@@ -98,11 +115,12 @@ const UserCallPage = () => {
 
       socket.emit("call-user", { offer });
 
+      // Server will forward messages, no admin socketId here
       remoteSocketIdRef.current = null;
 
       setErrorMsg("");
     } catch {
-      setErrorMsg("Unable to start call.");
+      setErrorMsg("Unable to start call. Try again.");
     }
   }
 
@@ -116,59 +134,66 @@ const UserCallPage = () => {
     setErrorMsg("");
   }
 
+  function endCallCleanup() {
+    if (peerConnectionRef.current) {
+      peerConnectionRef.current.close();
+      peerConnectionRef.current = null;
+    }
+    if (localVideoRef.current?.srcObject) {
+      localVideoRef.current.srcObject.getTracks().forEach((t) => t.stop());
+      localVideoRef.current.srcObject = null;
+    }
+    if (remoteVideoRef.current?.srcObject) {
+      remoteVideoRef.current.srcObject.getTracks().forEach((t) => t.stop());
+      remoteVideoRef.current.srcObject = null;
+    }
+    setCallStarted(false);
+    setCallEnded(true);
+  }
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white flex flex-col items-center p-10 font-sans">
-      <h1 className="text-4xl font-bold text-blue-900 mb-2">Video KYC Process</h1>
-      <p className="max-w-xl text-center text-blue-700 mb-8">
-        Connect securely with a bank employee for your KYC verification. Please allow camera and microphone access.
+    <div className={styles.container}>
+      <h1 className="text-4xl font-extrabold text-blue-900 mb-6">Video KYC Verification</h1>
+      <p className="max-w-xl mx-auto text-gray-700 mb-10 px-2">
+        This video call allows you to connect securely with a bank employee for your KYC verification. Please enable your camera and microphone.
       </p>
 
-      <div className="flex flex-col md:flex-row gap-10 justify-center w-full max-w-5xl">
-        <div className="flex flex-col items-center">
+      <div className={styles.videos}>
+        <div className={styles.videoWrapper}>
           <video
             ref={localVideoRef}
             autoPlay
             muted
             playsInline
-            className="w-80 h-60 rounded-lg border-4 border-blue-600 shadow-lg"
+            className={`${styles.video} ${styles.mutedVideo}`}
           />
-          <span className="mt-3 text-blue-700 font-semibold">Your Camera</span>
+          <p className="mt-4 text-blue-800 font-semibold text-lg">Your Camera</p>
         </div>
 
-        <div className="flex flex-col items-center">
+        <div className={styles.videoWrapper}>
           <video
             ref={remoteVideoRef}
             autoPlay
             playsInline
-            className={`w-80 h-60 rounded-lg border-4 shadow-lg ${callStarted ? "border-green-600" : "border-gray-400"}`}
+            className={`${styles.video} ${callStarted ? "border-green-600" : "border-gray-400"}`}
           />
-          <span className={`mt-3 font-semibold ${callStarted ? "text-green-700" : "text-gray-500"}`}>
+          <p className={`mt-4 font-semibold text-lg ${callStarted ? "text-green-700" : "text-gray-500"}`}>
             {callStarted ? "Bank Employee" : "Waiting for connection..."}
-          </span>
+          </p>
         </div>
       </div>
 
-      {errorMsg && (
-        <div className="mt-6 p-3 max-w-md text-center bg-red-100 text-red-700 rounded-md font-semibold shadow-md">
-          {errorMsg}
-        </div>
-      )}
+      {errorMsg && <div className={styles.error}>{errorMsg}</div>}
 
-      <div className="mt-8">
+      <div className={styles.btnGroup}>
         {!callStarted && !callEnded && (
-          <button
-            onClick={startCall}
-            className="px-12 py-3 bg-blue-700 hover:bg-blue-800 text-white font-bold rounded-lg shadow-md transition"
-          >
+          <button onClick={startCall} className={styles.acceptBtn}>
             Start Call
           </button>
         )}
 
         {callStarted && (
-          <button
-            onClick={endCall}
-            className="px-12 py-3 bg-red-600 hover:bg-red-700 text-white font-bold rounded-lg shadow-md transition"
-          >
+          <button onClick={endCall} className={styles.hangupBtn}>
             End Call
           </button>
         )}

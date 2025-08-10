@@ -1,53 +1,81 @@
 import React, { useEffect, useRef, useState } from "react";
-import socket from "../socket";
+import socket from "../socket"; // Your socket instance
+import styles from "./VideoCall.module.css";
 
 const AdminVideoPage = () => {
-  const [incomingCall, setIncomingCall] = useState(null);
+  const [incomingCall, setIncomingCall] = useState(null); // { from, offer }
   const [callStarted, setCallStarted] = useState(false);
+  const [currentCaller, setCurrentCaller] = useState(null);
   const [isAccepting, setIsAccepting] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
 
-  const localVideoRef = useRef();
-  const remoteVideoRef = useRef();
+  const localVideoRef = useRef(null);
+  const remoteVideoRef = useRef(null);
   const peerConnectionRef = useRef(null);
 
-  const iceServers = { iceServers: [{ urls: "stun:stun.l.google.com:19302" }] };
+  const iceServers = {
+    iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
+  };
 
+  // Register admin on connect and reconnect
   useEffect(() => {
-    socket.emit("admin-register");
+    function registerAdmin() {
+      socket.emit("admin-register");
+    }
+
+    registerAdmin();
+
+    socket.on("connect", registerAdmin);
+
+    return () => {
+      socket.off("connect", registerAdmin);
+    };
   }, []);
 
+  // Listen for incoming call, ice candidates, and call ended
   useEffect(() => {
     socket.on("incoming-call", ({ from, offer }) => {
       setIncomingCall({ from, offer });
       setErrorMsg("");
     });
 
-    socket.on("ice-candidate", ({ candidate }) => {
+    socket.on("ice-candidate", (data) => {
       if (peerConnectionRef.current) {
-        peerConnectionRef.current.addIceCandidate(new RTCIceCandidate(candidate)).catch(console.error);
+        peerConnectionRef.current
+          .addIceCandidate(new RTCIceCandidate(data.candidate))
+          .catch(console.error);
       }
     });
 
     socket.on("call-ended", () => {
-      endCall();
+      endCallCleanup();
       alert("User ended the call.");
+    });
+
+    socket.on("call-rejected", () => {
+      setErrorMsg("User rejected the call.");
+      setIncomingCall(null);
     });
 
     return () => {
       socket.off("incoming-call");
       socket.off("ice-candidate");
       socket.off("call-ended");
+      socket.off("call-rejected");
     };
   }, []);
 
+  // Accept incoming call
   async function acceptCall() {
     if (!incomingCall) return;
     setIsAccepting(true);
     setErrorMsg("");
 
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: true,
+        audio: true,
+      });
       localVideoRef.current.srcObject = stream;
 
       const pc = new RTCPeerConnection(iceServers);
@@ -71,6 +99,7 @@ const AdminVideoPage = () => {
 
       socket.emit("answer-call", { to: incomingCall.from, answer });
 
+      setCurrentCaller(incomingCall.from);
       setCallStarted(true);
       setIncomingCall(null);
     } catch (err) {
@@ -81,83 +110,109 @@ const AdminVideoPage = () => {
     }
   }
 
-  function hangUp() {
+  // Reject call
+  function rejectCall() {
+    if (incomingCall) {
+      socket.emit("call-rejected", { to: incomingCall.from });
+      setIncomingCall(null);
+    }
+  }
+
+  // Cleanup peer connection and media streams
+  function endCallCleanup() {
     if (peerConnectionRef.current) {
       peerConnectionRef.current.close();
       peerConnectionRef.current = null;
     }
-    socket.emit("call-ended", { to: incomingCall?.from });
+
+    if (localVideoRef.current?.srcObject) {
+      localVideoRef.current.srcObject.getTracks().forEach((t) => t.stop());
+      localVideoRef.current.srcObject = null;
+    }
+
+    if (remoteVideoRef.current?.srcObject) {
+      remoteVideoRef.current.srcObject.getTracks().forEach((t) => t.stop());
+      remoteVideoRef.current.srcObject = null;
+    }
+
     setCallStarted(false);
-    setIncomingCall(null);
+    setCurrentCaller(null);
+  }
+
+  // Hang up call manually
+  function hangUpCall() {
+    if (currentCaller) {
+      socket.emit("call-ended", { to: currentCaller });
+    }
+    endCallCleanup();
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-blue-100 flex flex-col items-center p-10 font-sans">
-      <h1 className="text-4xl font-bold text-blue-900 mb-2">Admin Video Panel</h1>
-      <p className="mb-8 max-w-xl text-center text-blue-700">
-        You are the bank employee. Accept incoming user video KYC requests here.
-      </p>
+    <div className={styles.container}>
+      <h1 className="text-4xl font-extrabold text-blue-900 mb-10">Admin Video Panel</h1>
 
-      <div className="flex flex-col md:flex-row gap-10 justify-center w-full max-w-5xl">
-        <div className="flex flex-col items-center">
+      <div className={styles.videos}>
+        {/* Local Video */}
+        <div className={styles.videoWrapper}>
           <video
             ref={localVideoRef}
             autoPlay
             muted
             playsInline
-            className="w-80 h-60 rounded-lg border-4 border-blue-600 shadow-lg"
+            className={`${styles.video} ${styles.mutedVideo}`}
           />
-          <span className="mt-3 text-blue-700 font-semibold">Your Camera</span>
+          <p className="mt-4 text-blue-800 font-semibold text-lg">Your Camera</p>
         </div>
 
-        <div className="flex flex-col items-center">
+        {/* Remote Video */}
+        <div className={styles.videoWrapper}>
           <video
             ref={remoteVideoRef}
             autoPlay
             playsInline
-            className={`w-80 h-60 rounded-lg border-4 shadow-lg ${callStarted ? "border-green-600" : "border-gray-400"}`}
+            className={`${styles.video} ${callStarted ? "border-green-600" : "border-gray-400"}`}
           />
-          <span className={`mt-3 font-semibold ${callStarted ? "text-green-700" : "text-gray-500"}`}>
-            {callStarted ? "User Camera" : "Waiting for user..."}
-          </span>
+          <p
+            className={`mt-4 font-semibold text-lg ${
+              callStarted ? "text-green-700" : "text-gray-500"
+            }`}
+          >
+            {callStarted ? "User Camera" : "Waiting for call..."}
+          </p>
         </div>
       </div>
 
-      {errorMsg && (
-        <div className="mt-6 p-3 max-w-md text-center bg-red-100 text-red-700 rounded-md font-semibold shadow-md">
-          {errorMsg}
+      {errorMsg && <div className={styles.error}>{errorMsg}</div>}
+
+      {/* Incoming Call Modal */}
+      {incomingCall && (
+        <div className={styles.modal}>
+          <h2 className={styles.modalHeading}>Incoming Call</h2>
+          <p className={styles.modalText}>
+            User <span className="font-mono">{incomingCall.from}</span> is calling you.
+          </p>
+          <div className={styles.btnGroup}>
+            <button
+              onClick={acceptCall}
+              disabled={isAccepting}
+              className={styles.acceptBtn}
+            >
+              {isAccepting ? "Accepting..." : "Accept"}
+            </button>
+            <button
+              onClick={rejectCall}
+              disabled={isAccepting}
+              className={styles.rejectBtn}
+            >
+              Reject
+            </button>
+          </div>
         </div>
       )}
 
-      {!callStarted && incomingCall && (
-        <div className="mt-8 flex gap-6">
-          <button
-            onClick={acceptCall}
-            disabled={isAccepting}
-            className={`px-10 py-3 rounded-lg font-semibold text-white shadow-lg transition ${
-              isAccepting ? "bg-green-400 cursor-not-allowed" : "bg-green-600 hover:bg-green-700"
-            }`}
-          >
-            {isAccepting ? "Accepting..." : "Accept Call"}
-          </button>
-          <button
-            onClick={() => {
-              socket.emit("call-rejected", { to: incomingCall.from });
-              setIncomingCall(null);
-            }}
-            disabled={isAccepting}
-            className="px-10 py-3 rounded-lg font-semibold bg-red-600 hover:bg-red-700 text-white shadow-lg transition"
-          >
-            Reject
-          </button>
-        </div>
-      )}
-
+      {/* Hang Up Button */}
       {callStarted && (
-        <button
-          onClick={hangUp}
-          className="mt-10 px-12 py-4 bg-red-600 hover:bg-red-700 rounded-xl text-white font-bold shadow-lg transition"
-        >
+        <button onClick={hangUpCall} className={styles.hangupBtn}>
           Hang Up Call
         </button>
       )}
