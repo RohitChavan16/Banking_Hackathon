@@ -75,11 +75,13 @@ const AdminVideoPage = () => {
       stream.getTracks().forEach((track) => pc.addTrack(track, stream));
 
       pc.ontrack = (event) => {
+        console.log("Remote track received", event.streams[0]);
         remoteVideoRef.current.srcObject = event.streams[0];
       };
 
       pc.onicecandidate = (event) => {
         if (event.candidate) {
+          console.log("Sending ICE candidate:", event.candidate);
           socket.emit("ice-candidate", { to: incomingCall.from, candidate: event.candidate });
         }
       };
