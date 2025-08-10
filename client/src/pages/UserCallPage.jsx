@@ -84,7 +84,7 @@ const UserCallPage = () => {
   };
 
   return (
-    <div className="p-4">
+    <div className="p-4 mt-30">
       <h2>User Page</h2>
       {!callStarted ? (
         <button onClick={startCall} className="bg-blue-500 text-white p-2">Call Admin</button>
