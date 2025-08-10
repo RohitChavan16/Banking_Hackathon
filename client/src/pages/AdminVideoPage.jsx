@@ -1,49 +1,39 @@
 import React, { useEffect, useRef, useState } from "react";
 import io from "socket.io-client";
 
-const socket = io("https://banking-hackathon.onrender.com"); 
+const socket = io("https://banking-hackathon.onrender.com");
 
 const AdminVideoPage = () => {
   const [incomingCall, setIncomingCall] = useState(null);
-  const [callStarted, setCallStarted] = useState(false);
-
-  const localVideoRef = useRef(null);
-  const remoteVideoRef = useRef(null);
+  const localVideoRef = useRef();
+  const remoteVideoRef = useRef();
   const peerConnectionRef = useRef(null);
 
-  const iceServers = {
-    iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
-  };
+  const iceServers = { iceServers: [{ urls: "stun:stun.l.google.com:19302" }] };
 
   useEffect(() => {
     socket.emit("admin-register");
-    console.log("Admin registered:", socket.id);
+  }, []);
 
+  useEffect(() => {
     socket.on("incoming-call", async ({ from, offer }) => {
-      console.log("Incoming call from:", from);
       setIncomingCall({ from, offer });
     });
 
-    socket.on("ice-candidate", async ({ candidate }) => {
-      try {
-        await peerConnectionRef.current?.addIceCandidate(candidate);
-      } catch (e) {
-        console.error(e);
+    socket.on("ice-candidate", ({ candidate }) => {
+      if (peerConnectionRef.current) {
+        console.log("Admin received ICE candidate", candidate);
+        peerConnectionRef.current.addIceCandidate(new RTCIceCandidate(candidate)).catch(console.error);
       }
-    });
-
-    socket.on("call-ended", () => {
-      endCall();
     });
 
     return () => {
       socket.off("incoming-call");
       socket.off("ice-candidate");
-      socket.off("call-ended");
     };
   }, []);
 
-  const acceptCall = async () => {
+  async function acceptCall() {
     if (!incomingCall) return;
 
     try {
@@ -56,11 +46,13 @@ const AdminVideoPage = () => {
       stream.getTracks().forEach((track) => pc.addTrack(track, stream));
 
       pc.ontrack = (event) => {
+        console.log("Admin ontrack:", event.streams[0]);
         remoteVideoRef.current.srcObject = event.streams[0];
       };
 
       pc.onicecandidate = (event) => {
         if (event.candidate) {
+          console.log("Admin sending ICE candidate", event.candidate);
           socket.emit("ice-candidate", { to: incomingCall.from, candidate: event.candidate });
         }
       };
@@ -71,60 +63,18 @@ const AdminVideoPage = () => {
 
       socket.emit("answer-call", { to: incomingCall.from, answer });
 
-      setCallStarted(true);
       setIncomingCall(null);
     } catch (err) {
-      console.error(err);
-      alert("Failed to accept call");
+      console.error("Admin accept call error", err);
     }
-  };
-
-  const endCall = () => {
-    peerConnectionRef.current?.close();
-    peerConnectionRef.current = null;
-
-    if (localVideoRef.current?.srcObject) {
-      localVideoRef.current.srcObject.getTracks().forEach((t) => t.stop());
-      localVideoRef.current.srcObject = null;
-    }
-    if (remoteVideoRef.current?.srcObject) {
-      remoteVideoRef.current.srcObject.getTracks().forEach((t) => t.stop());
-      remoteVideoRef.current.srcObject = null;
-    }
-
-    setCallStarted(false);
-    setIncomingCall(null);
-  };
+  }
 
   return (
-    <div style={{ padding: 20 }}>
-      <h1>Admin Video Call</h1>
-
-      <div style={{ display: "flex", gap: 20 }}>
-        <div>
-          <h3>Your Video</h3>
-          <video ref={localVideoRef} autoPlay muted playsInline style={{ width: 300, border: "1px solid black" }} />
-        </div>
-
-        <div>
-          <h3>User Video</h3>
-          <video ref={remoteVideoRef} autoPlay playsInline style={{ width: 300, border: "1px solid black" }} />
-        </div>
-      </div>
-
-      {incomingCall && (
-        <div style={{ marginTop: 20 }}>
-          <p>Incoming call from {incomingCall.from}</p>
-          <button onClick={acceptCall}>Accept Call</button>
-          <button onClick={() => setIncomingCall(null)}>Reject Call</button>
-        </div>
-      )}
-
-      {callStarted && (
-        <div style={{ marginTop: 20 }}>
-          <button onClick={endCall}>End Call</button>
-        </div>
-      )}
+    <div>
+      <h2>Admin Video</h2>
+      <video ref={localVideoRef} autoPlay muted playsInline style={{ width: "300px" }} />
+      <video ref={remoteVideoRef} autoPlay playsInline style={{ width: "300px" }} />
+      {incomingCall && <button onClick={acceptCall}>Accept Call</button>}
     </div>
   );
 };
