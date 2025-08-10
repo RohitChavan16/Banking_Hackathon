@@ -4,67 +4,50 @@ import { Server } from "socket.io";
 import cors from "cors";
 
 const app = express();
-
-app.use(cors({
-  origin: "https://banking-hackathon-2.onrender.com", // put your frontend URL here
-  methods: ["GET", "POST"],
-  credentials: true,
-}));
+app.use(cors({ origin: "*" }));
 
 const server = http.createServer(app);
-
 const io = new Server(server, {
-  cors: {
-    origin: "https://banking-hackathon-2.onrender.com",
-    methods: ["GET", "POST"],
-  },
+  cors: { origin: "*" },
 });
 
 let adminSocketId = null;
 
 io.on("connection", (socket) => {
-  console.log("User connected:", socket.id);
+  console.log("New connection:", socket.id);
 
   socket.on("admin-register", () => {
     adminSocketId = socket.id;
-    console.log("Admin registered with socket id:", adminSocketId);
+    console.log("Admin registered:", adminSocketId);
   });
 
-  socket.on("call-user", (data) => {
+  socket.on("call-user", ({ offer }) => {
     if (adminSocketId) {
-      io.to(adminSocketId).emit("incoming-call", { from: socket.id, offer: data.offer });
+      console.log(`User ${socket.id} calls Admin ${adminSocketId}`);
+      io.to(adminSocketId).emit("incoming-call", { from: socket.id, offer });
     } else {
       socket.emit("no-admin");
     }
   });
 
-  socket.on("answer-call", (data) => {
-    io.to(data.to).emit("call-answered", { answer: data.answer });
+  socket.on("answer-call", ({ to, answer }) => {
+    console.log(`Admin ${socket.id} answers User ${to}`);
+    io.to(to).emit("call-answered", { answer, from: socket.id });
   });
 
-  socket.on("call-rejected", (data) => {
-    io.to(data.to).emit("call-rejected");
-  });
-
-  socket.on("ice-candidate", (data) => {
-    io.to(data.to).emit("ice-candidate", { candidate: data.candidate });
-  });
-
-  socket.on("call-ended", (data) => {
-    io.to(data.to).emit("call-ended");
+  socket.on("ice-candidate", ({ to, candidate }) => {
+    console.log(`ICE candidate from ${socket.id} to ${to}`);
+    io.to(to).emit("ice-candidate", { candidate, from: socket.id });
   });
 
   socket.on("disconnect", () => {
+    console.log("Disconnected:", socket.id);
     if (socket.id === adminSocketId) {
       adminSocketId = null;
       console.log("Admin disconnected");
-      // Optionally notify all users no admin is available:
-      io.emit("no-admin");
     }
   });
 });
 
 const PORT = process.env.PORT || 5000;
-server.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
+server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
