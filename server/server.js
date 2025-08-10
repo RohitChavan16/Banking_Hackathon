@@ -4,12 +4,7 @@ import { Server } from "socket.io";
 import cors from "cors";
 
 const app = express();
-app.use(cors({ origin: "*" }));
-
-// Simple route for root URL
-app.get("/", (req, res) => {
-  res.send("WebRTC signaling server is running");
-});
+app.use(cors());
 
 const server = http.createServer(app);
 const io = new Server(server, {
@@ -19,34 +14,39 @@ const io = new Server(server, {
 let adminSocketId = null;
 
 io.on("connection", (socket) => {
-  console.log("New connection:", socket.id);
+  console.log("New client connected:", socket.id);
 
-  socket.on("admin-register", () => {
+  socket.on("register-admin", () => {
     adminSocketId = socket.id;
-    console.log("Admin registered:", adminSocketId);
+    console.log("Admin registered with socket ID:", adminSocketId);
   });
 
-  socket.on("call-user", ({ offer }) => {
+  socket.on("call-admin", (data) => {
+    // data = { offer, from }
     if (adminSocketId) {
-      console.log(`User ${socket.id} calls Admin ${adminSocketId}`);
-      io.to(adminSocketId).emit("incoming-call", { from: socket.id, offer });
+      io.to(adminSocketId).emit("incoming-call", { offer: data.offer, from: data.from });
     } else {
-      socket.emit("no-admin");
+      io.to(data.from).emit("no-admin");
     }
   });
 
-  socket.on("answer-call", ({ to, answer }) => {
-    console.log(`Admin ${socket.id} answers User ${to}`);
-    io.to(to).emit("call-answered", { answer, from: socket.id });
+  socket.on("answer-call", (data) => {
+    // data = { answer, to }
+    io.to(data.to).emit("call-accepted", { answer: data.answer });
   });
 
-  socket.on("ice-candidate", ({ to, candidate }) => {
-    console.log(`ICE candidate from ${socket.id} to ${to}`);
-    io.to(to).emit("ice-candidate", { candidate, from: socket.id });
+  socket.on("reject-call", (data) => {
+    // data = { to }
+    io.to(data.to).emit("call-rejected");
+  });
+
+  socket.on("ice-candidate", (data) => {
+    // data = { candidate, to }
+    io.to(data.to).emit("ice-candidate", { candidate: data.candidate });
   });
 
   socket.on("disconnect", () => {
-    console.log("Disconnected:", socket.id);
+    console.log("Socket disconnected:", socket.id);
     if (socket.id === adminSocketId) {
       adminSocketId = null;
       console.log("Admin disconnected");
@@ -55,4 +55,6 @@ io.on("connection", (socket) => {
 });
 
 const PORT = process.env.PORT || 5000;
-server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+server.listen(PORT, () => {
+  console.log("Server listening on port", PORT);
+});
