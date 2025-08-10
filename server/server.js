@@ -8,7 +8,13 @@ app.use(cors());
 
 const server = http.createServer(app);
 const io = new Server(server, {
-  cors: { origin: "*" },
+  cors: {
+    origin: [
+      "http://localhost:3000", // local testing
+      "https://banking-hackathon-2.onrender.com" // deployed frontend
+    ],
+    methods: ["GET", "POST"]
+  },
 });
 
 let adminSocketId = null;
@@ -21,28 +27,24 @@ io.on("connection", (socket) => {
     console.log("Admin registered with socket ID:", adminSocketId);
   });
 
-  socket.on("call-admin", (data) => {
-    // data = { offer, from }
+  socket.on("call-admin", ({ offer, from }) => {
     if (adminSocketId) {
-      io.to(adminSocketId).emit("incoming-call", { offer: data.offer, from: data.from });
+      io.to(adminSocketId).emit("incoming-call", { offer, from });
     } else {
-      io.to(data.from).emit("no-admin");
+      io.to(from).emit("no-admin");
     }
   });
 
-  socket.on("answer-call", (data) => {
-    // data = { answer, to }
-    io.to(data.to).emit("call-accepted", { answer: data.answer });
+  socket.on("answer-call", ({ answer, to }) => {
+    io.to(to).emit("call-accepted", { answer });
   });
 
-  socket.on("reject-call", (data) => {
-    // data = { to }
-    io.to(data.to).emit("call-rejected");
+  socket.on("reject-call", ({ to }) => {
+    io.to(to).emit("call-rejected");
   });
 
-  socket.on("ice-candidate", (data) => {
-    // data = { candidate, to }
-    io.to(data.to).emit("ice-candidate", { candidate: data.candidate });
+  socket.on("ice-candidate", ({ candidate, to }) => {
+    io.to(to).emit("ice-candidate", { candidate });
   });
 
   socket.on("disconnect", () => {
