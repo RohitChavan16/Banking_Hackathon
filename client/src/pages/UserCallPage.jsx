@@ -1,13 +1,14 @@
 import React, { useEffect, useRef, useState } from "react";
 import io from "socket.io-client";
-import {toast} from "react-hot-toast"
+import { toast } from "react-hot-toast";
 
-const socket = io("http://localhost:5000");
+const socket = io("https://banking-hackathon.onrender.com");
 
 const UserCallPage = () => {
   const localVideoRef = useRef(null);
   const remoteVideoRef = useRef(null);
   const peerConnectionRef = useRef(null);
+  const remoteSocketIdRef = useRef(null);
 
   const [callStarted, setCallStarted] = useState(false);
   const [callEnded, setCallEnded] = useState(false);
@@ -35,10 +36,11 @@ const UserCallPage = () => {
           remoteVideoRef.current.srcObject = event.streams[0];
         };
 
+        // ICE candidate handler moved here to capture peerConnectionRef properly
         peerConnectionRef.current.onicecandidate = (event) => {
           if (event.candidate) {
             socket.emit("ice-candidate", {
-              to: null, // server will forward ICE to correct peer
+              to: remoteSocketIdRef.current, // send to remote peer
               candidate: event.candidate,
             });
           }
@@ -69,6 +71,7 @@ const UserCallPage = () => {
         );
         setCallStarted(true);
         setCallEnded(false);
+        setErrorMsg("");
       } catch {
         setErrorMsg("Failed to establish connection.");
       }
@@ -76,7 +79,9 @@ const UserCallPage = () => {
 
     socket.on("ice-candidate", (data) => {
       if (peerConnectionRef.current) {
-        peerConnectionRef.current.addIceCandidate(new RTCIceCandidate(data.candidate)).catch(console.error);
+        peerConnectionRef.current
+          .addIceCandidate(new RTCIceCandidate(data.candidate))
+          .catch(console.error);
       }
     });
 
@@ -84,21 +89,53 @@ const UserCallPage = () => {
       setErrorMsg("No admin available right now. Please try later.");
     });
 
+    // Listen for incoming call offer from admin (optional, if admin initiates call)
+    socket.on("incoming-call", async (data) => {
+      remoteSocketIdRef.current = data.from;
+      try {
+        await peerConnectionRef.current.setRemoteDescription(
+          new RTCSessionDescription(data.offer)
+        );
+        const answer = await peerConnectionRef.current.createAnswer();
+        await peerConnectionRef.current.setLocalDescription(answer);
+
+        socket.emit("answer-call", {
+          to: data.from,
+          answer,
+        });
+
+        setCallStarted(true);
+        setCallEnded(false);
+        setErrorMsg("");
+      } catch (error) {
+        setErrorMsg("Error handling incoming call.");
+      }
+    });
+
     return () => {
       socket.off("call-answered");
       socket.off("ice-candidate");
       socket.off("no-admin");
+      socket.off("incoming-call");
     };
   }, []);
 
   async function startCall() {
-    if (!peerConnectionRef.current) return toast.error("Something is Wrong");
+    if (!peerConnectionRef.current) {
+      toast.error("Something is Wrong");
+      return;
+    }
 
     try {
       const offer = await peerConnectionRef.current.createOffer();
       await peerConnectionRef.current.setLocalDescription(offer);
 
-      socket.emit("call-user", { offer }); // No 'to' needed
+      socket.emit("call-user", { offer });
+
+      // remoteSocketIdRef will be set by server forwarding — keep null for now
+      remoteSocketIdRef.current = null;
+
+      setErrorMsg("");
     } catch {
       setErrorMsg("Unable to start call. Try again.");
     }
