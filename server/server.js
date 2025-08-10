@@ -6,6 +6,11 @@ import cors from "cors";
 const app = express();
 app.use(cors({ origin: "*" }));
 
+// Simple route for root URL
+app.get("/", (req, res) => {
+  res.send("WebRTC signaling server is running");
+});
+
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: { origin: "*" },
