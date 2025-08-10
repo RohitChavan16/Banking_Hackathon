@@ -10,7 +10,7 @@ const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
     origin: [
-      "http://localhost:3000", // local testing
+      "http://localhost:5173", // local testing
       "https://banking-hackathon-2.onrender.com" // deployed frontend
     ],
     methods: ["GET", "POST"]
