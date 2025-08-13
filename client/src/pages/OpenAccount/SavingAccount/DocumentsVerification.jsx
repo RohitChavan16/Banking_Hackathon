@@ -175,7 +175,7 @@ function DocumentVerification() {
               </div>
               <button
                 onClick={handleVerifyOtp}
-                className="border h-12 cursor-pointer px-3 rounded shadow-2xl bg-amber-300 cursor-pointer hover:bg-amber-400"
+                className="border h-12 px-3 rounded shadow-2xl bg-amber-300 cursor-pointer hover:bg-amber-400"
               >
                 Verify OTP
               </button>

@@ -26,18 +26,37 @@ const UserCallPage = () => {
       try {
         console.log("Requesting user media...");
         const stream = await navigator.mediaDevices.getUserMedia({ 
-          video: true, 
-          audio: true 
+          video: { 
+            width: { ideal: 1280 },
+            height: { ideal: 720 },
+            facingMode: "user"
+          }, 
+          audio: {
+            echoCancellation: true,
+            noiseSuppression: true
+          }
         });
+        
+        console.log("Local stream obtained:", stream.getTracks().map(t => `${t.kind}: ${t.label}`));
         
         if (localVideoRef.current) {
           localVideoRef.current.srcObject = stream;
+          localVideoRef.current.onloadedmetadata = () => {
+            console.log("Local video metadata loaded");
+            localVideoRef.current.play().catch(e => console.error("Local video play error:", e));
+          };
         }
         setLocalStream(stream);
         console.log("Local stream setup complete");
       } catch (err) {
         console.error("Error accessing media devices:", err);
-        setErrorMsg("Error accessing camera or microphone. Please allow permissions.");
+        if (err.name === 'NotAllowedError') {
+          setErrorMsg("Camera/microphone permission denied. Please allow access and refresh the page.");
+        } else if (err.name === 'NotFoundError') {
+          setErrorMsg("No camera or microphone found. Please check your devices.");
+        } else {
+          setErrorMsg("Error accessing camera or microphone. Please allow permissions.");
+        }
       }
     }
 
@@ -173,14 +192,19 @@ const UserCallPage = () => {
 
       // Add local stream tracks
       localStream.getTracks().forEach((track) => {
+        console.log(`Adding track: ${track.kind} - ${track.label}`);
         pc.addTrack(track, localStream);
       });
 
       // Handle remote stream
       pc.ontrack = (event) => {
-        console.log("Remote track received", event.streams[0]);
-        if (remoteVideoRef.current) {
+        console.log("Remote track received:", event.track.kind, event.streams[0]);
+        if (remoteVideoRef.current && event.streams[0]) {
           remoteVideoRef.current.srcObject = event.streams[0];
+          remoteVideoRef.current.onloadedmetadata = () => {
+            console.log("Remote video metadata loaded");
+            remoteVideoRef.current.play().catch(e => console.error("Remote video play error:", e));
+          };
         }
       };
 
@@ -189,7 +213,7 @@ const UserCallPage = () => {
         if (event.candidate) {
           console.log("Sending ICE candidate to admin");
           socket.emit("ice-candidate", {
-            to: null, // Admin socket ID handled by server
+            to: adminSocketId, // Admin socket ID handled by server
             candidate: event.candidate,
           });
         }
@@ -198,10 +222,16 @@ const UserCallPage = () => {
       // Monitor connection state
       pc.onconnectionstatechange = () => {
         console.log("Connection state:", pc.connectionState);
-        if (pc.connectionState === 'failed') {
+        if (pc.connectionState === 'connected') {
+          console.log("Peer connection established successfully!");
+        } else if (pc.connectionState === 'failed') {
           setErrorMsg("Connection failed. Please try again.");
           setIsCallInProgress(false);
         }
+      };
+
+      pc.oniceconnectionstatechange = () => {
+        console.log("ICE connection state:", pc.iceConnectionState);
       };
 
       // Create offer
@@ -298,7 +328,7 @@ const UserCallPage = () => {
             autoPlay 
             muted 
             playsInline 
-            className="w-72 h-56 rounded-xl border-4 border-blue-600 shadow-lg bg-gray-200" 
+            className="w-72 h-56 rounded-xl border-4 border-blue-600 shadow-lg bg-gray-200 object-cover" 
           />
           <span className="mt-3 text-blue-800 font-semibold">Your Camera</span>
         </div>
@@ -307,7 +337,7 @@ const UserCallPage = () => {
             ref={remoteVideoRef}
             autoPlay
             playsInline
-            className={`w-72 h-56 rounded-xl border-4 shadow-lg bg-gray-200 ${
+            className={`w-72 h-56 rounded-xl border-4 shadow-lg bg-gray-200 object-cover ${
               callStarted ? "border-green-600" : "border-gray-300"
             }`}
           />
