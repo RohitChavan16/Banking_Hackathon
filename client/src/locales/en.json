@@ -709,10 +709,67 @@
       "description": "Be a part of a purpose-driven institution and contribute to India’s economic growth and financial inclusion mission.",
       "button": "View Current Openings"
     }
+  },
+
+
+
+
+
+
+
+  
+  "contact": {
+    "title": "Contact Us",
+    "description": "Bank of Maharashtra contact details for complaints or for your feedback. Quick numbers, emails and dedicated support channels to help you with balance enquiry, mini statements, e-statements or reporting cyber fraud.",
+    "missedCallBtn": "Missed Call Numbers",
+    "tollFreeBtn": "Toll Free",
+    "cyberFraudBtn": "Cyber Fraud",
+    "heroImgAlt": "Customer support"
+  },
+  "quickLinks": {
+    "title": "Quick Links",
+    "items": [
+      "ATM Service Helpdesk",
+      "Internet Banking Helpdesk",
+      "Toll Free Numbers",
+      "Head Office",
+      "Zonal Offices",
+      "Functional Heads",
+      "Nodal Officer",
+      "Forex Contacts",
+      "Complaints & Grievances",
+      "Chief Liaison Officer of SC/ST/PWD and OBC"
+    ]
+  },
+  "products": {
+    "title": "Our Most Popular Products",
+    "savings": "Savings Account",
+    "homeLoan": "Home Loan",
+    "savingsAlt": "Savings",
+    "homeLoanAlt": "Home loan"
+  },
+  "missedCall": {
+    "title": "Missed Call Numbers",
+    "content": "1) Balance Enquiry: 98333 35555 - Balance will be sent via SMS. 2) Mini Statement: 72878 88886 - Last 5 transactions via SMS. 3) E-Statement: 72878 88887 - 30-day PDF statement sent to registered email."
+  },
+  "complaint": {
+    "title": "Lodge a Complaint (Email)",
+    "content": "To lodge any complaint through email: hocomplaints@mahabank.co.in, cmcustomerservice@mahabank.co.in"
+  },
+  "tollFree": {
+    "title": "General Toll Free",
+    "content": "MAHASEVA - 24x7: 1800-233-4526"
+  },
+  "cyberFraud": {
+    "title": "Cyber Fraud - Reporting Incident",
+    "content": "Website: cybercrime.gov.in | Toll free number: 1930"
+  },
+  "notes": {
+    "title": "Notes & Disclaimers",
+    "description": "The missed call services and numbers listed above are available for customers having the mobile number registered with the bank. For more details or additional contact categories like Head Office, Zonal Offices and Functional Heads, refer to the official contact page.",
+    "sourceLabel": "Source:",
+    "source": "bankofmaharashtra.in — Contact Us"
   }
-
-
-
 
 
 
