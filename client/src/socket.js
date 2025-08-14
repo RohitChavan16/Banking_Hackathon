@@ -1,6 +1,6 @@
 import { io } from "socket.io-client";
 
-const socket = io("http://localhost:5000", {
+const socket = io("https://banking-hackathon.onrender.com", {
   transports: ["websocket"], // force WebSocket
   autoConnect: true,
   reconnection: true,

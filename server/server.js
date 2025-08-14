@@ -7,7 +7,8 @@ const app = express();
 
 app.use(cors({
   origin: [ "http://localhost:5173", 
-           "http://localhost:5175"],
+           "http://localhost:5175",
+          "https://banking-hackathon-client.vercel.app"],
   // put your frontend URL here
   methods: ["GET", "POST"],
   credentials: true,
