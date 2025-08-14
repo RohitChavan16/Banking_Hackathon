@@ -17,7 +17,7 @@ const server = http.createServer(app);
 
 const io = new Server(server, {
   cors: {
-    origin: "http://localhost:5173",
+    origin: ["http://localhost:5173", "http://localhost:5175"],
     methods: ["GET", "POST"],
   },
 });
@@ -84,7 +84,12 @@ io.on("connection", (socket) => {
   // ICE candidate exchange
   socket.on("ice-candidate", (data) => {
     console.log("ICE candidate from:", socket.id, "to:", data.to);
-    if (data.to) {
+    if (data.to === "admin" && adminSocketId) {
+      io.to(adminSocketId).emit("ice-candidate", { 
+        candidate: data.candidate,
+        from: socket.id 
+      });
+    } else if (data.to) {
       io.to(data.to).emit("ice-candidate", { 
         candidate: data.candidate,
         from: socket.id 
@@ -92,10 +97,38 @@ io.on("connection", (socket) => {
     }
   });
 
+  // Speech-to-text transcript sharing
+  socket.on("speech-transcript", ({ to, transcript, isFinal, speaker }) => {
+    console.log(`Speech transcript from ${socket.id} (${speaker}) to ${to}: ${transcript.substring(0, 50)}...`);
+    
+    if (to === 'admin' && adminSocketId) {
+      // User sending transcript to admin
+      io.to(adminSocketId).emit('speech-transcript', {
+        from: socket.id,
+        transcript,
+        isFinal,
+        speaker
+      });
+    } else {
+      // Admin sending transcript to specific user
+      const targetSocket = io.sockets.sockets.get(to);
+      if (targetSocket) {
+        io.to(to).emit('speech-transcript', {
+          from: socket.id,
+          transcript,
+          isFinal,
+          speaker
+        });
+      }
+    }
+  });
+
   // Call ended
   socket.on("call-ended", (data) => {
     console.log("Call ended by:", socket.id, "to:", data.to);
-    if (data.to) {
+    if (data.to === "admin" && adminSocketId) {
+      io.to(adminSocketId).emit("call-ended", { from: socket.id });
+    } else if (data.to) {
       io.to(data.to).emit("call-ended", { from: socket.id });
     }
   });
@@ -134,6 +167,6 @@ io.on("connection", (socket) => {
 });
 
 const PORT = process.env.PORT || 5000;
-server.listen(PORT, () => {
+server.listen(PORT, "0.0.0.0", () => {
   console.log(`Server running on port ${PORT}`);
 });

@@ -13,11 +13,113 @@ const UserCallPage = () => {
   const [isCallInProgress, setIsCallInProgress] = useState(false);
   const [localStream, setLocalStream] = useState(null);
 
+  // Speech-to-Text states
+  const [isListening, setIsListening] = useState(false);
+  const [transcript, setTranscript] = useState("");
+  const [remoteTranscript, setRemoteTranscript] = useState("");
+  const [captions, setCaptions] = useState([]);
+  const [speechSupported, setSpeechSupported] = useState(false);
+
+  const recognitionRef = useRef(null);
+
   const iceServers = {
     iceServers: [
       { urls: "stun:stun.l.google.com:19302" },
       { urls: "stun:stun1.l.google.com:19302" }
     ],
+  };
+
+  // Initialize Speech Recognition
+  useEffect(() => {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    
+    if (SpeechRecognition) {
+      setSpeechSupported(true);
+      const recognition = new SpeechRecognition();
+      
+      recognition.continuous = true;
+      recognition.interimResults = true;
+      recognition.lang = 'en-US';
+      
+      recognition.onstart = () => {
+        console.log("Speech recognition started");
+        setIsListening(true);
+      };
+      
+      recognition.onresult = (event) => {
+        let interimTranscript = '';
+        let finalTranscript = '';
+        
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+          const transcriptPart = event.results[i][0].transcript;
+          if (event.results[i].isFinal) {
+            finalTranscript += transcriptPart;
+          } else {
+            interimTranscript += transcriptPart;
+          }
+        }
+        
+        const currentTranscript = finalTranscript || interimTranscript;
+        setTranscript(currentTranscript);
+        
+        // Send real-time transcript to admin
+        if (callStarted && currentTranscript.trim()) {
+          socket.emit("speech-transcript", {
+            to: "admin",
+            transcript: currentTranscript,
+            isFinal: !!finalTranscript,
+            speaker: "user"
+          });
+        }
+        
+        // Add to captions if final
+        if (finalTranscript.trim()) {
+          const newCaption = {
+            id: Date.now(),
+            text: finalTranscript,
+            speaker: "You",
+            timestamp: new Date().toLocaleTimeString()
+          };
+          setCaptions(prev => [...prev.slice(-9), newCaption]);
+          setTranscript("");
+        }
+      };
+      
+      recognition.onerror = (event) => {
+        console.error("Speech recognition error:", event.error);
+        setIsListening(false);
+      };
+      
+      recognition.onend = () => {
+        console.log("Speech recognition ended");
+        setIsListening(false);
+      };
+      
+      recognitionRef.current = recognition;
+    } else {
+      console.warn("Speech Recognition not supported in this browser");
+      setSpeechSupported(false);
+    }
+    
+    return () => {
+      if (recognitionRef.current) {
+        recognitionRef.current.stop();
+      }
+    };
+  }, [callStarted]);
+
+  // Toggle Speech Recognition
+  const toggleSpeechRecognition = () => {
+    if (!speechSupported) {
+      setErrorMsg("Speech recognition not supported in your browser");
+      return;
+    }
+
+    if (isListening) {
+      recognitionRef.current?.stop();
+    } else {
+      recognitionRef.current?.start();
+    }
   };
 
   useEffect(() => {
@@ -74,11 +176,29 @@ const UserCallPage = () => {
       endCallCleanup();
     });
 
+    // Speech transcript listener
+    socket.on("speech-transcript", (data) => {
+      console.log("Received transcript:", data);
+      setRemoteTranscript(data.transcript);
+      
+      if (data.isFinal && data.transcript.trim()) {
+        const newCaption = {
+          id: Date.now(),
+          text: data.transcript,
+          speaker: "Admin",
+          timestamp: new Date().toLocaleTimeString()
+        };
+        setCaptions(prev => [...prev.slice(-9), newCaption]);
+        setRemoteTranscript("");
+      }
+    });
+
     setupLocalStream();
 
     return () => {
       socket.off("connect");
       socket.off("disconnect");
+      socket.off("speech-transcript");
       // Clean up local stream
       if (localStream) {
         localStream.getTracks().forEach(track => track.stop());
@@ -104,6 +224,14 @@ const UserCallPage = () => {
           setCallEnded(false);
           setIsCallInProgress(false);
           setErrorMsg("");
+          
+          // Auto-start speech recognition when call is answered
+          if (speechSupported && recognitionRef.current) {
+            setTimeout(() => {
+              recognitionRef.current.start();
+            }, 1000);
+          }
+          
           console.log("Call established successfully");
         }
       } catch (err) {
@@ -167,7 +295,7 @@ const UserCallPage = () => {
         clearTimeout(callTimeout);
       }
     };
-  }, [isCallInProgress]); // Add isCallInProgress as dependency
+  }, [isCallInProgress, speechSupported]); // Add speechSupported as dependency
 
   async function startCall() {
     if (!localStream) {
@@ -213,7 +341,7 @@ const UserCallPage = () => {
         if (event.candidate) {
           console.log("Sending ICE candidate to admin");
           socket.emit("ice-candidate", {
-            to: adminSocketId, // Admin socket ID handled by server
+            to: "admin", // Admin socket ID handled by server
             candidate: event.candidate,
           });
         }
@@ -270,6 +398,11 @@ const UserCallPage = () => {
   function endCallCleanup() {
     console.log("Cleaning up call");
     
+    // Stop speech recognition
+    if (recognitionRef.current && isListening) {
+      recognitionRef.current.stop();
+    }
+    
     if (peerConnectionRef.current) {
       peerConnectionRef.current.close();
       peerConnectionRef.current = null;
@@ -283,6 +416,10 @@ const UserCallPage = () => {
     setCallStarted(false);
     setCallEnded(true);
     setIsCallInProgress(false);
+    setCaptions([]);
+    setTranscript("");
+    setRemoteTranscript("");
+    setIsListening(false);
   }
 
   function resetCall() {
@@ -308,6 +445,27 @@ const UserCallPage = () => {
         {isConnected && <span className="ml-2 text-sm">ID: {socket.id}</span>}
       </div>
 
+      {/* Speech Recognition Controls */}
+      {callStarted && (
+        <div className="mb-4 flex items-center gap-4">
+          <div className={`px-3 py-1 rounded-lg text-sm ${speechSupported ? 'bg-blue-100 text-blue-800' : 'bg-yellow-100 text-yellow-800'}`}>
+            Speech: {speechSupported ? 'Available' : 'Not Supported'}
+          </div>
+          {speechSupported && (
+            <button
+              onClick={toggleSpeechRecognition}
+              className={`px-4 py-2 rounded-lg text-white font-semibold ${
+                isListening 
+                  ? 'bg-red-500 hover:bg-red-600' 
+                  : 'bg-green-500 hover:bg-green-600'
+              }`}
+            >
+              {isListening ? '🔴 Stop' : '🎤 Listen'}
+            </button>
+          )}
+        </div>
+      )}
+
       {/* Debug button */}
       {isConnected && (
         <button 
@@ -322,31 +480,79 @@ const UserCallPage = () => {
       )}
 
       <div className="flex flex-col md:flex-row gap-8 items-center justify-center mb-8">
-        <div className="flex flex-col items-center">
-          <video 
-            ref={localVideoRef} 
-            autoPlay 
-            muted 
-            playsInline 
-            className="w-72 h-56 rounded-xl border-4 border-blue-600 shadow-lg bg-gray-200 object-cover" 
-          />
-          <span className="mt-3 text-blue-800 font-semibold">Your Camera</span>
+        {/* Video Section */}
+        <div className="flex flex-col md:flex-row gap-8 items-center">
+          <div className="flex flex-col items-center relative">
+            <video 
+              ref={localVideoRef} 
+              autoPlay 
+              muted 
+              playsInline 
+              className="w-72 h-56 rounded-xl border-4 border-blue-600 shadow-lg bg-gray-200 object-cover" 
+            />
+            <span className="mt-3 text-blue-800 font-semibold">Your Camera</span>
+            
+            {/* Current transcript overlay for user */}
+            {callStarted && transcript && (
+              <div className="absolute bottom-2 left-2 right-2 bg-black bg-opacity-70 text-white text-sm p-2 rounded">
+                You: {transcript}
+              </div>
+            )}
+          </div>
+          
+          <div className="flex flex-col items-center relative">
+            <video
+              ref={remoteVideoRef}
+              autoPlay
+              playsInline
+              className={`w-72 h-56 rounded-xl border-4 shadow-lg bg-gray-200 object-cover ${
+                callStarted ? "border-green-600" : "border-gray-300"
+              }`}
+            />
+            <span className={`mt-3 font-semibold ${
+              callStarted ? "text-green-700" : "text-gray-400"
+            }`}>
+              {callStarted ? "Bank Employee" : "Waiting for connection..."}
+            </span>
+            
+            {/* Remote transcript overlay */}
+            {callStarted && remoteTranscript && (
+              <div className="absolute bottom-2 left-2 right-2 bg-black bg-opacity-70 text-white text-sm p-2 rounded">
+                Admin: {remoteTranscript}
+              </div>
+            )}
+          </div>
         </div>
-        <div className="flex flex-col items-center">
-          <video
-            ref={remoteVideoRef}
-            autoPlay
-            playsInline
-            className={`w-72 h-56 rounded-xl border-4 shadow-lg bg-gray-200 object-cover ${
-              callStarted ? "border-green-600" : "border-gray-300"
-            }`}
-          />
-          <span className={`mt-3 font-semibold ${
-            callStarted ? "text-green-700" : "text-gray-400"
-          }`}>
-            {callStarted ? "Bank Employee" : "Waiting for connection..."}
-          </span>
-        </div>
+
+        {/* Captions Panel */}
+        {callStarted && (
+          <div className="w-80 bg-white rounded-xl border-2 border-gray-300 shadow-lg">
+            <div className="bg-blue-600 text-white p-3 rounded-t-xl font-semibold">
+              Live Captions
+            </div>
+            <div className="h-64 p-3 overflow-y-auto">
+              {captions.length === 0 ? (
+                <div className="text-gray-500 text-center mt-8">
+                  Captions will appear here...
+                </div>
+              ) : (
+                captions.map((caption) => (
+                  <div key={caption.id} className="mb-3 p-2 rounded bg-gray-50">
+                    <div className="flex justify-between items-center mb-1">
+                      <span className={`font-semibold text-sm ${
+                        caption.speaker === 'You' ? 'text-blue-600' : 'text-green-600'
+                      }`}>
+                        {caption.speaker}
+                      </span>
+                      <span className="text-xs text-gray-500">{caption.timestamp}</span>
+                    </div>
+                    <div className="text-gray-800">{caption.text}</div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        )}
       </div>
 
       {errorMsg && (
