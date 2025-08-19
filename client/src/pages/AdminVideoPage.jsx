@@ -21,12 +21,34 @@ const AdminVideoPage = () => {
   const peerConnectionRef = useRef(null);
   const recognitionRef = useRef(null);
 
-  const iceServers = {
-    iceServers: [
-      { urls: "stun:stun.l.google.com:19302" },
-      { urls: "stun:stun1.l.google.com:19302" }
-    ],
-  };
+  const iceServers = [
+  // Keep Google STUN for fallback
+  { urls: "stun:stun.l.google.com:19302" },
+  { urls: "stun:stun1.l.google.com:19302" },
+
+  // Metered STUN/TURN
+  { urls: "stun:stun.relay.metered.ca:80" },
+  {
+    urls: "turn:global.relay.metered.ca:80",
+    username: "5016b78f1e715b84d92a6e8b",
+    credential: "L9iEXm2ksn1bHU94",
+  },
+  {
+    urls: "turn:global.relay.metered.ca:80?transport=tcp",
+    username: "5016b78f1e715b84d92a6e8b",
+    credential: "L9iEXm2ksn1bHU94",
+  },
+  {
+    urls: "turn:global.relay.metered.ca:443",
+    username: "5016b78f1e715b84d92a6e8b",
+    credential: "L9iEXm2ksn1bHU94",
+  },
+  {
+    urls: "turns:global.relay.metered.ca:443?transport=tcp",
+    username: "5016b78f1e715b84d92a6e8b",
+    credential: "L9iEXm2ksn1bHU94",
+  },
+];
 
   // Initialize Speech Recognition
   useEffect(() => {
@@ -243,7 +265,7 @@ const AdminVideoPage = () => {
       localVideoRef.current.srcObject = stream;
 
       // Create peer connection
-      const pc = new RTCPeerConnection(iceServers);
+       const pc = new RTCPeerConnection({ iceServers });
       peerConnectionRef.current = pc;
 
       // Add local stream to peer connection
